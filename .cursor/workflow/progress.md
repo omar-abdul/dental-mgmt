@@ -19,7 +19,14 @@
 
 > Not in-flight work. Do not copy these into root `progress.md`.
 
+### B1 — Billing screenshot (Figure 7)
+- Related findings: —
+- Status: deferred
+- What's left: No Figure 7 image; G5 UI inferred from DCMS billing + thesis text
+- Why: Question
+- Expires: 2026-10-02
+- Updated: 2026-09-02
+
 ## Open questions
 
-- [x] User-mentioned JSON was not attached → screenshot-derived `database/data/golden-smile.example.json` is canonical until replaced
-- [ ] Billing page (Figure 7) was not screenshotted → invoice list + detail inferred from thesis text
+- [x] User JSON provided → `database/data/dcms.json` is the domain contract

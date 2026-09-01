@@ -5,46 +5,63 @@
 
 ## Task list
 
-### T1 — Author architecture.md
+### T1 — Persist DCMS JSON
 
 | Field | Value |
 |-------|-------|
 | **id** | T1 |
 | **status** | completed |
 | **depends_on** | — |
-| **Done when** | Root `architecture.md` has product/stack, §3 Current state, settled decisions, domain model, role matrix, UI map, and G0–G9 with Mode + unchecked verify bullets |
+| **Done when** | `database/data/dcms.json` exists, `json_decode` succeeds, and it contains `roles`, `billing.fee_items`, `working_hours`, `payment_system`, `required_workflows` |
 
-**Description:** Turn the thesis modules (§4.5–4.8), screenshots, and current Laravel Vue starter into a buildable architecture with sequenced goals.
+**Description:** Save the user-provided production schema JSON as the domain contract.
 
-**Evidence:** `architecture.md` — G0–G9 present; §3 Current state = starter kit only; D1 retire teams; Mode A on auth/schema/PHI/money goals.
+**Evidence:** `database/data/dcms.json` — parse ok, 6 roles, 9 fee_items, working_hours, payment_system, required_workflows present.
 
 ---
 
-### T2 — Canonical example dataset
+### T2 — Revise architecture.md
 
 | Field | Value |
 |-------|-------|
 | **id** | T2 |
 | **status** | completed |
 | **depends_on** | T1 |
-| **Done when** | `database/data/golden-smile.example.json` exists and includes staff (Admin/Dentist/Receptionist), named patients (Maria Santos and calendar patients), rooms/dentists, today’s appointments, inventory rows matching the three visible SKUs plus generate rules for dashboard KPIs |
+| **Done when** | `architecture.md` has updated §3–§12: JSON wins domain (USD, Mogadishu, 6 roles, chairs, fees, mobile money); screenshots win the five UI layouts; G0–G9 Wave 1 + G10–G15 Wave 2 with Mode + unchecked verify bullets |
 
-**Evidence:** `database/data/golden-smile.example.json` — `php -r json_decode` OK; staff emails; Maria Santos; 8 named appointments; gloves/composite/anesthetic; `kpis` + `generate`.
+**Description:** Reconcile thesis/screenshots with DCMS JSON. Do not start implementing G0.
+
+**Evidence:** `architecture.md` D1–D14; §9 G0–G15; §3 still starter-only.
 
 ---
 
-### T3 — Repo bookkeeping
+### T3 — Align screenshot demo JSON
 
 | Field | Value |
 |-------|-------|
 | **id** | T3 |
 | **status** | completed |
-| **depends_on** | T1, T2 |
-| **Done when** | Root `changelog.md` has an authorship entry; root `progress.md` has no in-flight G-id; workflow residue files exist |
+| **depends_on** | T2 |
+| **Done when** | `database/data/golden-smile.example.json` uses DCMS field names (first/last name, chairs, fee codes, USD cents, 6 staff roles, password ≥ 10 chars) while keeping named screenshot people/SKUs/KPIs |
 
-**Description:** Close this scaffolding run per goal-workflow atomic close (docs only; G0–G9 verify boxes stay unchecked).
+**Description:** Screenshot named records remain the G9 UI fixture, reshaped to the contract.
 
-**Evidence:** `changelog.md` 2026-09-01 authorship entry; `progress.md` next = G0; `.cursor/workflow/progress.md` open question for missing billing screenshot.
+**Evidence:** parse ok; `demo_password=password12`; chairs CHAIR-001–003; FEE-001–009; Maria Santos + Ahmed Ali; `stock_value_cents=148200`.
+
+---
+
+### T4 — Bookkeeping
+
+| Field | Value |
+|-------|-------|
+| **id** | T4 |
+| **status** | completed |
+| **depends_on** | T2, T3 |
+| **Done when** | Root `changelog.md` has a 2026-09-02 ingest entry; root `progress.md` has no in-flight G-id; prior billing-screenshot question is in workflow Backlog with Expires |
+
+**Description:** Atomic close for this docs run. G0–G15 verify boxes stay unchecked.
+
+**Evidence:** changelog 2026-09-02; progress next=G0; workflow Backlog B1 Figure 7.
 
 ---
 

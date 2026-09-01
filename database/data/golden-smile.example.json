@@ -1,16 +1,31 @@
 {
-  "$schema_comment": "Canonical demo dataset for Golden Smile. Named records must seed as-is. generate.* tells the G9 seeder how to fill KPI totals with extra factory rows. Amounts are integer centavos (₱1 = 100).",
+  "$schema_comment": "G9 UI fixture. Field shapes follow database/data/dcms.json. Amounts are integer USD cents ($1 = 100). Demo password meets DCMS min length 10.",
   "clinic": {
     "name": "Golden Smile Dental Clinic",
     "system_name": "Management Information System",
-    "timezone": "Asia/Manila",
-    "currency": "PHP",
-    "day_starts": "08:00",
-    "day_ends": "16:00"
+    "timezone": "Africa/Mogadishu",
+    "currency": "USD",
+    "id_formats": {
+      "patient": "PAT-{YYYY}-{#####}",
+      "appointment": "APT-{YYYY}-{#####}",
+      "invoice": "INV-{YYYY}-{#####}",
+      "receipt": "RCT-{YYYY}-{#####}",
+      "payment": "PAY-{YYYY}-{#####}",
+      "prescription": "RX-{YYYY}-{#####}"
+    }
   },
   "auth": {
-    "demo_password": "password"
+    "demo_password": "password12"
   },
+  "working_hours": [
+    { "day": "Saturday", "open": "08:00", "close": "18:00" },
+    { "day": "Sunday", "open": "08:00", "close": "18:00" },
+    { "day": "Monday", "open": "08:00", "close": "18:00" },
+    { "day": "Tuesday", "open": "08:00", "close": "18:00" },
+    { "day": "Wednesday", "open": "08:00", "close": "18:00" },
+    { "day": "Thursday", "open": "08:00", "close": "13:00" },
+    { "day": "Friday", "open": null, "close": null }
+  ],
   "kpis": {
     "todays_appointments": 18,
     "active_patients": 1284,
@@ -18,13 +33,13 @@
     "low_stock_items": 3,
     "out_of_stock_items": 1,
     "inventory_item_count": 86,
-    "stock_value_centavos": 14820000,
+    "stock_value_cents": 148200,
     "weekly_visits": {
       "mon": 12,
       "tue": 18,
       "wed": 9,
       "thu": 22,
-      "fri": 15,
+      "fri": 0,
       "sat": 25,
       "sun": 18
     }
@@ -34,346 +49,304 @@
     { "key": "room-2", "name": "Room 2", "sort_order": 2 },
     { "key": "room-3", "name": "Room 3", "sort_order": 3 }
   ],
+  "chairs": [
+    { "key": "chair-1", "code": "CHAIR-001", "name": "Chair 1", "room_key": "room-1" },
+    { "key": "chair-2", "code": "CHAIR-002", "name": "Chair 2", "room_key": "room-2" },
+    { "key": "chair-3", "code": "CHAIR-003", "name": "Chair 3", "room_key": "room-3" }
+  ],
   "users": [
-    {
-      "key": "admin-santos",
-      "name": "Dr. A. Santos",
-      "email": "a.santos@goldensmile.clinic",
-      "role": "admin"
-    },
-    {
-      "key": "dentist-lim",
-      "name": "Dr. R. Lim",
-      "email": "r.lim@goldensmile.clinic",
-      "role": "dentist"
-    },
-    {
-      "key": "dentist-cruz",
-      "name": "Dr. M. Cruz",
-      "email": "m.cruz@goldensmile.clinic",
-      "role": "dentist"
-    },
-    {
-      "key": "receptionist",
-      "name": "Receptionist",
-      "email": "receptionist@goldensmile.clinic",
-      "role": "receptionist"
-    }
+    { "key": "admin-santos", "name": "Dr. A. Santos", "email": "a.santos@goldensmile.clinic", "role": "admin" },
+    { "key": "dentist-lim", "name": "Dr. R. Lim", "email": "r.lim@goldensmile.clinic", "role": "dentist" },
+    { "key": "dentist-cruz", "name": "Dr. M. Cruz", "email": "m.cruz@goldensmile.clinic", "role": "dentist" },
+    { "key": "receptionist", "name": "Receptionist", "email": "receptionist@goldensmile.clinic", "role": "receptionist" },
+    { "key": "nurse", "name": "Dental Nurse", "email": "nurse@goldensmile.clinic", "role": "nurse" },
+    { "key": "accountant", "name": "Accountant", "email": "accountant@goldensmile.clinic", "role": "accountant" },
+    { "key": "lab", "name": "Laboratory Staff", "email": "lab@goldensmile.clinic", "role": "lab" }
   ],
   "dentists": [
-    {
-      "key": "dr-santos",
-      "user_key": "admin-santos",
-      "display_name": "Dr. A. Santos",
-      "default_room_key": "room-1"
-    },
-    {
-      "key": "dr-lim",
-      "user_key": "dentist-lim",
-      "display_name": "Dr. R. Lim",
-      "default_room_key": "room-2"
-    },
-    {
-      "key": "dr-cruz",
-      "user_key": "dentist-cruz",
-      "display_name": "Dr. M. Cruz",
-      "default_room_key": "room-3"
-    }
+    { "key": "dr-santos", "user_key": "admin-santos", "display_name": "Dr. A. Santos", "default_chair_key": "chair-1" },
+    { "key": "dr-lim", "user_key": "dentist-lim", "display_name": "Dr. R. Lim", "default_chair_key": "chair-2" },
+    { "key": "dr-cruz", "user_key": "dentist-cruz", "display_name": "Dr. M. Cruz", "default_chair_key": "chair-3" }
   ],
-  "treatment_types": [
-    {
-      "key": "cleaning",
-      "name": "Dental Cleaning",
-      "color": "blue",
-      "default_duration_minutes": 45,
-      "default_fee_centavos": 150000
-    },
-    {
-      "key": "consultation",
-      "name": "Consultation",
-      "color": "amber",
-      "default_duration_minutes": 30,
-      "default_fee_centavos": 50000
-    },
-    {
-      "key": "extraction",
-      "name": "Tooth Extraction",
-      "color": "red",
-      "default_duration_minutes": 60,
-      "default_fee_centavos": 250000
-    },
-    {
-      "key": "root-canal",
-      "name": "Root Canal",
-      "color": "teal",
-      "default_duration_minutes": 90,
-      "default_fee_centavos": 800000
-    },
-    {
-      "key": "whitening",
-      "name": "Whitening",
-      "color": "blue",
-      "default_duration_minutes": 60,
-      "default_fee_centavos": 450000
-    },
-    {
-      "key": "braces",
-      "name": "Braces Adjustment",
-      "color": "blue",
-      "default_duration_minutes": 30,
-      "default_fee_centavos": 100000
-    },
-    {
-      "key": "filling",
-      "name": "Filling",
-      "color": "amber",
-      "default_duration_minutes": 45,
-      "default_fee_centavos": 200000
-    },
-    {
-      "key": "checkup",
-      "name": "Check-up",
-      "color": "green",
-      "default_duration_minutes": 30,
-      "default_fee_centavos": 80000
-    }
+  "fee_items": [
+    { "key": "consult", "code": "CONSULT", "dcms_id": "FEE-001", "name": "Dental Consultation", "category": "Consultation", "unit": "visit", "price_cents": 2000, "calendar_color": "amber", "default_duration_minutes": 30 },
+    { "key": "exam", "code": "EXAM", "dcms_id": "FEE-002", "name": "Comprehensive Dental Examination", "category": "Consultation", "unit": "visit", "price_cents": 2500, "calendar_color": "green", "default_duration_minutes": 30 },
+    { "key": "clean", "code": "CLEAN", "dcms_id": "FEE-003", "name": "Dental Cleaning / Scaling", "category": "Preventive", "unit": "procedure", "price_cents": 3500, "calendar_color": "blue", "default_duration_minutes": 45 },
+    { "key": "fill", "code": "FILL", "dcms_id": "FEE-004", "name": "Dental Filling", "category": "Restorative", "unit": "tooth", "price_cents": 4500, "calendar_color": "amber", "default_duration_minutes": 45 },
+    { "key": "rct", "code": "RCT", "dcms_id": "FEE-005", "name": "Root Canal Treatment", "category": "Endodontics", "unit": "tooth", "price_cents": 15000, "calendar_color": "teal", "default_duration_minutes": 90 },
+    { "key": "ext", "code": "EXT", "dcms_id": "FEE-006", "name": "Tooth Extraction", "category": "Surgery", "unit": "tooth", "price_cents": 5000, "calendar_color": "red", "default_duration_minutes": 60 },
+    { "key": "crown", "code": "CROWN", "dcms_id": "FEE-007", "name": "Dental Crown", "category": "Prosthodontics", "unit": "tooth", "price_cents": 20000, "calendar_color": "blue", "default_duration_minutes": 90 },
+    { "key": "implant", "code": "IMPLANT", "dcms_id": "FEE-008", "name": "Dental Implant", "category": "Implantology", "unit": "implant", "price_cents": 50000, "calendar_color": "teal", "default_duration_minutes": 120 },
+    { "key": "xray", "code": "XRAY", "dcms_id": "FEE-009", "name": "Dental X-Ray", "category": "Radiology", "unit": "image", "price_cents": 1500, "calendar_color": "green", "default_duration_minutes": 15 }
   ],
   "patients": [
     {
+      "key": "ahmed-ali",
+      "patient_number": "PAT-2026-00001",
+      "first_name": "Ahmed",
+      "last_name": "Ali",
+      "date_of_birth": "1995-01-15",
+      "gender": "male",
+      "phone": "0610000001",
+      "email": null,
+      "occupation": null,
+      "address": null,
+      "referred_by": "Walk-in",
+      "insurance_provider": null,
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
+    },
+    {
       "key": "maria-santos",
-      "full_name": "Maria Santos",
+      "patient_number": "PAT-2026-00002",
+      "first_name": "Maria",
+      "last_name": "Santos",
       "date_of_birth": "1994-08-14",
-      "sex": "female",
-      "contact_number": "09171234567",
+      "gender": "female",
+      "phone": "09171234567",
       "email": "maria.santos@email.com",
       "occupation": "Teacher",
-      "home_address": "123 Mabini Street, Brgy. San Roque, Laascanood",
-      "known_allergies": "Penicillin",
-      "existing_medical_condition": "None",
+      "address": "123 Mabini Street, Brgy. San Roque, Laascanood",
       "referred_by": "Walk-in",
       "insurance_provider": "PhilHealth",
-      "emergency_contact_name": "Jose Santos (Spouse)",
-      "emergency_contact_number": "09285551212",
-      "status": "active"
+      "status": "active",
+      "allergies": [{ "label": "Penicillin", "is_critical": true }],
+      "conditions": [{ "label": "None", "is_critical": false }],
+      "emergency_contacts": [{ "name": "Jose Santos", "relationship": "Spouse", "phone": "09285551212" }]
     },
     {
       "key": "juan-dela-cruz",
-      "full_name": "Juan Dela Cruz",
+      "patient_number": "PAT-2026-00003",
+      "first_name": "Juan",
+      "last_name": "Dela Cruz",
       "date_of_birth": "1988-03-21",
-      "sex": "male",
-      "contact_number": "09180001111",
+      "gender": "male",
+      "phone": "09180001111",
       "email": "juan.delacruz@email.com",
       "occupation": null,
-      "home_address": "45 Rizal Avenue, Manila",
-      "known_allergies": "None",
-      "existing_medical_condition": "None",
+      "address": "45 Rizal Avenue, Manila",
       "referred_by": "Walk-in",
-      "insurance_provider": "PhilHealth",
-      "emergency_contact_name": null,
-      "emergency_contact_number": null,
-      "status": "active"
+      "insurance_provider": null,
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
     },
     {
       "key": "ana-reyes",
-      "full_name": "Ana Reyes",
+      "patient_number": "PAT-2026-00004",
+      "first_name": "Ana",
+      "last_name": "Reyes",
       "date_of_birth": "1996-11-02",
-      "sex": "female",
-      "contact_number": "09182223333",
+      "gender": "female",
+      "phone": "09182223333",
       "email": "ana.reyes@email.com",
       "occupation": null,
-      "home_address": "8 Quezon Street, Quezon City",
-      "known_allergies": "None",
-      "existing_medical_condition": "None",
+      "address": "8 Quezon Street, Quezon City",
       "referred_by": "Walk-in",
       "insurance_provider": null,
-      "emergency_contact_name": null,
-      "emergency_contact_number": null,
-      "status": "active"
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
     },
     {
       "key": "carlo-mendoza",
-      "full_name": "Carlo Mendoza",
+      "patient_number": "PAT-2026-00005",
+      "first_name": "Carlo",
+      "last_name": "Mendoza",
       "date_of_birth": "1990-07-18",
-      "sex": "male",
-      "contact_number": "09183334444",
+      "gender": "male",
+      "phone": "09183334444",
       "email": "carlo.mendoza@email.com",
       "occupation": null,
-      "home_address": "12 Luna Street, Makati",
-      "known_allergies": "None",
-      "existing_medical_condition": "None",
+      "address": "12 Luna Street, Makati",
       "referred_by": "Walk-in",
-      "insurance_provider": "PhilHealth",
-      "emergency_contact_name": null,
-      "emergency_contact_number": null,
-      "status": "active"
+      "insurance_provider": null,
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
     },
     {
       "key": "liza-fernandez",
-      "full_name": "Liza Fernandez",
+      "patient_number": "PAT-2026-00006",
+      "first_name": "Liza",
+      "last_name": "Fernandez",
       "date_of_birth": "1992-01-09",
-      "sex": "female",
-      "contact_number": "09184445555",
+      "gender": "female",
+      "phone": "09184445555",
       "email": "liza.fernandez@email.com",
       "occupation": null,
-      "home_address": "3 Mabini Street, Pasig",
-      "known_allergies": "None",
-      "existing_medical_condition": "None",
+      "address": "3 Mabini Street, Pasig",
       "referred_by": "Walk-in",
       "insurance_provider": null,
-      "emergency_contact_name": null,
-      "emergency_contact_number": null,
-      "status": "active"
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
     },
     {
       "key": "grace-tan",
-      "full_name": "Grace Tan",
+      "patient_number": "PAT-2026-00007",
+      "first_name": "Grace",
+      "last_name": "Tan",
       "date_of_birth": "2001-05-30",
-      "sex": "female",
-      "contact_number": "09185556666",
+      "gender": "female",
+      "phone": "09185556666",
       "email": "grace.tan@email.com",
       "occupation": null,
-      "home_address": "77 Ortigas Avenue, Pasig",
-      "known_allergies": "None",
-      "existing_medical_condition": "None",
+      "address": "77 Ortigas Avenue, Pasig",
       "referred_by": "Walk-in",
       "insurance_provider": null,
-      "emergency_contact_name": null,
-      "emergency_contact_number": null,
-      "status": "active"
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
     },
     {
       "key": "noel-garcia",
-      "full_name": "Noel Garcia",
+      "patient_number": "PAT-2026-00008",
+      "first_name": "Noel",
+      "last_name": "Garcia",
       "date_of_birth": "1985-12-12",
-      "sex": "male",
-      "contact_number": "09186667777",
+      "gender": "male",
+      "phone": "09186667777",
       "email": "noel.garcia@email.com",
       "occupation": null,
-      "home_address": "9 Bonifacio Street, Taguig",
-      "known_allergies": "None",
-      "existing_medical_condition": "None",
+      "address": "9 Bonifacio Street, Taguig",
       "referred_by": "Walk-in",
-      "insurance_provider": "PhilHealth",
-      "emergency_contact_name": null,
-      "emergency_contact_number": null,
-      "status": "active"
+      "insurance_provider": null,
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
     },
     {
       "key": "pedro-alonzo",
-      "full_name": "Pedro Alonzo",
+      "patient_number": "PAT-2026-00009",
+      "first_name": "Pedro",
+      "last_name": "Alonzo",
       "date_of_birth": "1979-09-04",
-      "sex": "male",
-      "contact_number": "09187778888",
+      "gender": "male",
+      "phone": "09187778888",
       "email": "pedro.alonzo@email.com",
       "occupation": null,
-      "home_address": "21 Kalayaan Avenue, Quezon City",
-      "known_allergies": "None",
-      "existing_medical_condition": "None",
+      "address": "21 Kalayaan Avenue, Quezon City",
       "referred_by": "Walk-in",
       "insurance_provider": null,
-      "emergency_contact_name": null,
-      "emergency_contact_number": null,
-      "status": "active"
+      "status": "active",
+      "allergies": [],
+      "conditions": [],
+      "emergency_contacts": []
     }
   ],
   "appointments": [
     {
-      "key": "appt-maria-cleaning",
+      "key": "appt-ahmed-exam",
+      "number": "APT-2026-00001",
+      "when": "today 10:00",
+      "duration_minutes": 30,
+      "patient_key": "ahmed-ali",
+      "dentist_key": "dr-santos",
+      "chair_key": "chair-1",
+      "fee_item_key": "exam",
+      "status": "scheduled",
+      "reason": "Dental examination"
+    },
+    {
+      "key": "appt-maria-clean",
       "when": "today 09:00",
       "duration_minutes": 45,
       "patient_key": "maria-santos",
       "dentist_key": "dr-santos",
-      "room_key": "room-1",
-      "treatment_type_key": "cleaning",
+      "chair_key": "chair-1",
+      "fee_item_key": "clean",
       "status": "confirmed"
     },
     {
-      "key": "appt-juan-extraction",
+      "key": "appt-juan-ext",
       "when": "today 09:30",
       "duration_minutes": 60,
       "patient_key": "juan-dela-cruz",
       "dentist_key": "dr-lim",
-      "room_key": "room-2",
-      "treatment_type_key": "extraction",
+      "chair_key": "chair-2",
+      "fee_item_key": "ext",
       "status": "confirmed"
     },
     {
       "key": "appt-ana-consult",
-      "when": "today 10:15",
+      "when": "today 10:45",
       "duration_minutes": 30,
       "patient_key": "ana-reyes",
       "dentist_key": "dr-santos",
-      "room_key": "room-1",
-      "treatment_type_key": "consultation",
-      "status": "pending"
+      "chair_key": "chair-1",
+      "fee_item_key": "consult",
+      "status": "scheduled"
     },
     {
-      "key": "appt-carlo-root-canal",
+      "key": "appt-carlo-rct",
       "when": "today 11:00",
       "duration_minutes": 90,
       "patient_key": "carlo-mendoza",
       "dentist_key": "dr-lim",
-      "room_key": "room-2",
-      "treatment_type_key": "root-canal",
+      "chair_key": "chair-2",
+      "fee_item_key": "rct",
       "status": "confirmed"
     },
     {
-      "key": "appt-liza-whitening",
+      "key": "appt-liza-crown",
       "when": "today 08:30",
-      "duration_minutes": 60,
+      "duration_minutes": 90,
       "patient_key": "liza-fernandez",
       "dentist_key": "dr-cruz",
-      "room_key": "room-3",
-      "treatment_type_key": "whitening",
+      "chair_key": "chair-3",
+      "fee_item_key": "crown",
       "status": "confirmed"
     },
     {
-      "key": "appt-grace-braces",
-      "when": "today 10:00",
+      "key": "appt-grace-consult",
+      "when": "today 10:30",
       "duration_minutes": 30,
       "patient_key": "grace-tan",
       "dentist_key": "dr-cruz",
-      "room_key": "room-3",
-      "treatment_type_key": "braces",
+      "chair_key": "chair-3",
+      "fee_item_key": "consult",
       "status": "confirmed"
     },
     {
-      "key": "appt-noel-filling",
+      "key": "appt-noel-fill",
       "when": "today 13:00",
       "duration_minutes": 45,
       "patient_key": "noel-garcia",
       "dentist_key": "dr-lim",
-      "room_key": "room-2",
-      "treatment_type_key": "filling",
+      "chair_key": "chair-2",
+      "fee_item_key": "fill",
       "status": "confirmed"
     },
     {
-      "key": "appt-pedro-checkup",
-      "when": "today 11:00",
+      "key": "appt-pedro-exam",
+      "when": "today 11:15",
       "duration_minutes": 30,
       "patient_key": "pedro-alonzo",
       "dentist_key": "dr-cruz",
-      "room_key": "room-3",
-      "treatment_type_key": "checkup",
+      "chair_key": "chair-3",
+      "fee_item_key": "exam",
       "status": "confirmed"
     }
   ],
   "treatments": [
     {
-      "key": "tx-carlo-root-canal",
+      "key": "tx-carlo-rct",
       "patient_key": "carlo-mendoza",
       "dentist_key": "dr-lim",
-      "appointment_key": "appt-carlo-root-canal",
+      "appointment_key": "appt-carlo-rct",
       "diagnosis": "Irreversible pulpitis, tooth 36",
       "status": "completed",
       "completed_relative": "3 hours ago",
-      "procedures": [
-        {
-          "treatment_type_key": "root-canal",
-          "fee_centavos": 800000,
-          "quantity": 1
-        }
-      ],
+      "procedures": [{ "fee_item_key": "rct", "tooth_fdi": "36", "fee_cents": 15000, "quantity": 1 }],
       "prescriptions": [
         {
           "medication": "Amoxicillin 500mg",
@@ -385,23 +358,47 @@
   ],
   "invoices": [
     {
-      "key": "inv-paid-2500",
-      "patient_key": "juan-dela-cruz",
-      "treatment_key": null,
+      "key": "inv-ahmed-exam",
+      "invoice_number": "INV-2026-00001",
+      "patient_key": "ahmed-ali",
       "status": "paid",
       "items": [
-        {
-          "description": "Tooth Extraction",
-          "quantity": 1,
-          "unit_price_centavos": 250000
-        }
+        { "fee_item_key": "exam", "description": "Comprehensive Dental Examination", "quantity": 1, "unit_price_cents": 2500 }
       ],
       "payments": [
         {
-          "amount_centavos": 250000,
-          "method": "cash",
+          "payment_number": "PAY-2026-00001",
+          "amount_cents": 2500,
+          "method": "zaad",
+          "status": "completed",
           "paid_relative": "1 hour ago",
-          "receipt_number": "OR-2026-0001"
+          "receipt_number": "RCT-2026-00001",
+          "mobile_money": {
+            "provider": "Telesom",
+            "payer_phone": "0610000001",
+            "transaction_id": "ZAAD-TXN-EXAMPLE-001",
+            "reference_number": "ZAAD-REF-001",
+            "verification_status": "verified"
+          }
+        }
+      ]
+    },
+    {
+      "key": "inv-juan-ext",
+      "invoice_number": "INV-2026-00002",
+      "patient_key": "juan-dela-cruz",
+      "status": "paid",
+      "items": [
+        { "fee_item_key": "ext", "description": "Tooth Extraction", "quantity": 1, "unit_price_cents": 5000 }
+      ],
+      "payments": [
+        {
+          "payment_number": "PAY-2026-00002",
+          "amount_cents": 5000,
+          "method": "cash",
+          "status": "completed",
+          "paid_relative": "1 hour ago",
+          "receipt_number": "RCT-2026-00002"
         }
       ]
     }
@@ -410,75 +407,49 @@
     {
       "key": "gloves",
       "name": "Disposable Gloves (Box)",
-      "category": "ppe",
+      "category": "PPE",
       "quantity": 120,
       "unit": "Box",
       "reorder_level": 30,
-      "unit_cost_centavos": 35000
+      "unit_cost_cents": 350
     },
     {
       "key": "composite-resin",
       "name": "Composite Resin (Syringe)",
-      "category": "restorative",
+      "category": "Dental Materials",
       "quantity": 4,
       "unit": "Pcs",
       "reorder_level": 10,
-      "unit_cost_centavos": 85000
+      "unit_cost_cents": 850
     },
     {
       "key": "anesthetic",
       "name": "Local Anesthetic Cartridge",
-      "category": "pharmaceutical",
+      "category": "Medicines",
       "quantity": 0,
       "unit": "Box",
       "reorder_level": 5,
-      "unit_cost_centavos": 120000
+      "unit_cost_cents": 1200
     }
   ],
   "activity": [
-    {
-      "type": "patient.registered",
-      "description": "New patient registered: Maria Santos",
-      "relative": "5 minutes ago",
-      "subject_key": "maria-santos"
-    },
-    {
-      "type": "appointment.booked",
-      "description": "Appointment booked: Juan Dela Cruz",
-      "relative": "22 minutes ago",
-      "subject_key": "appt-juan-extraction"
-    },
-    {
-      "type": "invoice.paid",
-      "description": "Invoice paid: ₱2,500.00",
-      "relative": "1 hour ago",
-      "subject_key": "inv-paid-2500"
-    },
-    {
-      "type": "inventory.low",
-      "description": "Stock alert: Composite resin low",
-      "relative": "2 hours ago",
-      "subject_key": "composite-resin"
-    },
-    {
-      "type": "treatment.completed",
-      "description": "Treatment completed: Root canal - Rm 2",
-      "relative": "3 hours ago",
-      "subject_key": "tx-carlo-root-canal"
-    }
+    { "type": "patient.registered", "description": "New patient registered: Maria Santos", "relative": "5 minutes ago", "subject_key": "maria-santos" },
+    { "type": "appointment.booked", "description": "Appointment booked: Juan Dela Cruz", "relative": "22 minutes ago", "subject_key": "appt-juan-ext" },
+    { "type": "invoice.paid", "description": "Invoice paid: $25.00", "relative": "1 hour ago", "subject_key": "inv-ahmed-exam" },
+    { "type": "inventory.low", "description": "Stock alert: Composite resin low", "relative": "2 hours ago", "subject_key": "composite-resin" },
+    { "type": "treatment.completed", "description": "Treatment completed: Root canal - Rm 2", "relative": "3 hours ago", "subject_key": "tx-carlo-rct" }
   ],
   "generate": {
-    "comment": "G9 seeder adds factory rows on top of named records until kpis.* match. Do not use this in Pest; tests use factories only.",
-    "extra_todays_appointments": "kpis.todays_appointments minus named appointments.count for today",
+    "comment": "G9 seeder adds factory rows on top of named records until kpis.* match. Pest must not load the generate set.",
+    "extra_todays_appointments": "kpis.todays_appointments minus named appointments for today",
     "extra_active_patients": "kpis.active_patients minus named patients.count",
-    "extra_pending_invoices": "kpis.pending_invoices minus named invoices with status pending",
-    "extra_inventory": "named SKUs plus generated items so counts and stock_value_centavos match; keep exactly kpis.low_stock_items low and kpis.out_of_stock_items out after including the three named SKUs (1 low composite, 1 out anesthetic; generate 1 additional low-stock item)",
-    "weekly_visits": "create appointments on the last Mon–Sun window matching kpis.weekly_visits; today's named + extra appointments count toward today's weekday"
+    "extra_pending_invoices": "kpis.pending_invoices minus named invoices that are unpaid/issued",
+    "extra_inventory": "named SKUs plus generated items so counts and stock_value_cents match; keep exactly kpis.low_stock_items low and kpis.out_of_stock_items out (named: 1 low composite, 1 out anesthetic; generate 1 additional low-stock item)",
+    "weekly_visits": "appointments on last Mon–Sun matching kpis.weekly_visits"
   },
   "lookups": {
     "allergies": ["None", "Penicillin", "Latex", "Lidocaine", "Ibuprofen"],
     "medical_conditions": ["None", "Hypertension", "Diabetes", "Asthma", "Heart disease"],
-    "referred_by": ["Walk-in", "Another dentist", "Insurance", "Family / friend"],
-    "insurance_providers": ["None", "PhilHealth", "Maxicare", "Intellicare", "Medicard"]
+    "referred_by": ["Walk-in", "Another dentist", "Insurance", "Family / friend"]
   }
 }

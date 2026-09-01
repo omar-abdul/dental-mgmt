@@ -1,0 +1,1152 @@
+{
+  "system": {
+    "name": "Dental Clinic Management System (DCMS)",
+    "version": "2.1.0",
+    "description": "Comprehensive data structure for a dental clinic management application.",
+    "currency": "USD",
+    "date_format": "YYYY-MM-DD",
+    "datetime_format": "YYYY-MM-DDTHH:mm:ss",
+    "type": "clinic_management_system",
+    "production_ready_schema": true,
+    "timezone": "Africa/Mogadishu",
+    "last_updated": "2026-08-31"
+  },
+  "roles": [
+    {
+      "id": "admin",
+      "name": "Administrator",
+      "permissions": ["*"]
+    },
+    {
+      "id": "dentist",
+      "name": "Dentist",
+      "permissions": [
+        "patients",
+        "appointments",
+        "clinical_records",
+        "dental_chart",
+        "treatments",
+        "prescriptions",
+        "invoices"
+      ]
+    },
+    {
+      "id": "receptionist",
+      "name": "Receptionist",
+      "permissions": ["patients", "appointments", "billing", "notifications"]
+    },
+    {
+      "id": "nurse",
+      "name": "Dental Nurse",
+      "permissions": ["patients", "appointments", "clinical_records", "inventory"]
+    },
+    {
+      "id": "accountant",
+      "name": "Accountant",
+      "permissions": ["billing", "expenses", "reports"]
+    },
+    {
+      "id": "lab",
+      "name": "Laboratory Staff",
+      "permissions": ["lab_orders", "lab_items"]
+    }
+  ],
+  "users": [],
+  "patients": [],
+  "emergency_contacts": [],
+  "medical_history": [],
+  "allergies": [],
+  "current_medications": [],
+  "appointments": [],
+  "waiting_queue": [],
+  "dental_chart": {
+    "tooth_numbering_system": "FDI",
+    "statuses": [
+      "healthy",
+      "caries",
+      "filled",
+      "missing",
+      "extracted",
+      "root_canal",
+      "crown",
+      "implant",
+      "bridge",
+      "fractured",
+      "impacted",
+      "other"
+    ],
+    "surfaces": ["M", "D", "O", "I", "B", "L"],
+    "records": []
+  },
+  "clinical_records": [],
+  "diagnoses": [],
+  "treatment_plans": [],
+  "treatment_plan_items": [],
+  "treatments": [],
+  "procedures": [],
+  "prescriptions": [],
+  "prescription_items": [],
+  "lab_orders": [],
+  "lab_items": [],
+  "inventory": {
+    "categories": [
+      "Dental Materials",
+      "Medicines",
+      "Instruments",
+      "PPE",
+      "Consumables",
+      "Office Supplies"
+    ],
+    "items": [],
+    "stock_movements": [],
+    "suppliers": [],
+    "purchase_orders": [],
+    "purchase_order_items": []
+  },
+  "billing": {
+    "invoices": [],
+    "invoice_items": [],
+    "payments": [],
+    "refunds": [],
+    "discounts": [],
+    "insurance_claims": [],
+    "fee_items": [
+      {
+        "id": "FEE-001",
+        "code": "CONSULT",
+        "name": "Dental Consultation",
+        "category": "Consultation",
+        "unit": "visit",
+        "price": 20,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-002",
+        "code": "EXAM",
+        "name": "Comprehensive Dental Examination",
+        "category": "Consultation",
+        "unit": "visit",
+        "price": 25,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-003",
+        "code": "CLEAN",
+        "name": "Dental Cleaning / Scaling",
+        "category": "Preventive",
+        "unit": "procedure",
+        "price": 35,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-004",
+        "code": "FILL",
+        "name": "Dental Filling",
+        "category": "Restorative",
+        "unit": "tooth",
+        "price": 45,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-005",
+        "code": "RCT",
+        "name": "Root Canal Treatment",
+        "category": "Endodontics",
+        "unit": "tooth",
+        "price": 150,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-006",
+        "code": "EXT",
+        "name": "Tooth Extraction",
+        "category": "Surgery",
+        "unit": "tooth",
+        "price": 50,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-007",
+        "code": "CROWN",
+        "name": "Dental Crown",
+        "category": "Prosthodontics",
+        "unit": "tooth",
+        "price": 200,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-008",
+        "code": "IMPLANT",
+        "name": "Dental Implant",
+        "category": "Implantology",
+        "unit": "implant",
+        "price": 500,
+        "tax_rate": 0,
+        "active": true
+      },
+      {
+        "id": "FEE-009",
+        "code": "XRAY",
+        "name": "Dental X-Ray",
+        "category": "Radiology",
+        "unit": "image",
+        "price": 15,
+        "tax_rate": 0,
+        "active": true
+      }
+    ],
+    "price_lists": [],
+    "price_list_items": [],
+    "payment_plans": [],
+    "installments": [],
+    "cash_registers": [],
+    "daily_closings": []
+  },
+  "expenses": [],
+  "staff": [],
+  "rooms": [],
+  "chairs": [],
+  "services": [],
+  "working_hours": [
+    { "day": "Saturday", "open": "08:00", "close": "18:00" },
+    { "day": "Sunday", "open": "08:00", "close": "18:00" },
+    { "day": "Monday", "open": "08:00", "close": "18:00" },
+    { "day": "Tuesday", "open": "08:00", "close": "18:00" },
+    { "day": "Wednesday", "open": "08:00", "close": "18:00" },
+    { "day": "Thursday", "open": "08:00", "close": "13:00" },
+    { "day": "Friday", "open": null, "close": null }
+  ],
+  "insurance": {
+    "providers": [],
+    "policies": [],
+    "claims": []
+  },
+  "documents": [],
+  "consents": [],
+  "notifications": [],
+  "communication_templates": [
+    {
+      "id": "APT-REMINDER",
+      "channel": "SMS",
+      "name": "Appointment Reminder",
+      "body": "Dear {patient_name}, this is a reminder of your dental appointment on {date} at {time}."
+    },
+    {
+      "id": "APT-CONFIRM",
+      "channel": "SMS",
+      "name": "Appointment Confirmation",
+      "body": "Your dental appointment has been confirmed for {date} at {time}. Thank you."
+    },
+    {
+      "id": "PAYMENT-RECEIPT",
+      "channel": "SMS",
+      "name": "Payment Receipt",
+      "body": "Payment received. Receipt #{receipt_number}. Thank you."
+    }
+  ],
+  "reports": {
+    "available": [
+      "Daily Appointments",
+      "Patient Registration",
+      "Treatment Revenue",
+      "Outstanding Balances",
+      "Payments",
+      "Expenses",
+      "Inventory Stock",
+      "Low Stock",
+      "Treatment Statistics",
+      "Dentist Performance",
+      "Laboratory Orders",
+      "Insurance Claims"
+    ],
+    "mobile_money": [
+      "Mobile Money Collections by Provider",
+      "ZAAD Collections",
+      "Sahal Collections",
+      "eDahab Collections",
+      "MyCash Collections",
+      "Mobile Money Transaction Exceptions",
+      "Duplicate Transaction Report",
+      "Mobile Money Reconciliation",
+      "Mobile Money Refunds and Reversals"
+    ]
+  },
+  "settings": {
+    "clinic": {
+      "name": "Dental Clinic",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "website": "",
+      "logo": ""
+    },
+    "appointment_statuses": [
+      "scheduled",
+      "confirmed",
+      "checked_in",
+      "in_progress",
+      "completed",
+      "cancelled",
+      "no_show",
+      "rescheduled"
+    ],
+    "payment_methods": ["cash", "card", "bank_transfer", "mobile_money", "insurance"],
+    "invoice_statuses": [
+      "draft",
+      "issued",
+      "partially_paid",
+      "paid",
+      "overdue",
+      "cancelled",
+      "refunded"
+    ],
+    "patient_statuses": ["active", "inactive", "archived"],
+    "gender_options": ["male", "female", "other", "prefer_not_to_say"],
+    "languages": ["English", "Somali", "Arabic"],
+    "id_formats": {
+      "patient": "PAT-{YYYY}-{#####}",
+      "appointment": "APT-{YYYY}-{#####}",
+      "encounter": "ENC-{YYYY}-{#####}",
+      "invoice": "INV-{YYYY}-{#####}",
+      "receipt": "RCT-{YYYY}-{#####}",
+      "payment": "PAY-{YYYY}-{#####}",
+      "prescription": "RX-{YYYY}-{#####}",
+      "lab_order": "LAB-{YYYY}-{#####}",
+      "purchase_order": "PO-{YYYY}-{#####}"
+    },
+    "clinical": {
+      "tooth_numbering_system": "FDI",
+      "default_note_format": "SOAP",
+      "allow_draft_notes": true,
+      "require_clinician_signoff": true,
+      "lock_signed_clinical_records": true
+    },
+    "billing": {
+      "currency": "USD",
+      "decimal_places": 2,
+      "allow_partial_payments": true,
+      "allow_payment_over_invoice": false,
+      "require_reference_for_electronic_payments": true,
+      "invoice_due_days": 0,
+      "tax_enabled": true,
+      "discount_authorization_required": true,
+      "refund_authorization_required": true,
+      "daily_cash_reconciliation_required": true,
+      "mobile_money": {
+        "enabled": true,
+        "providers": ["zaad", "sahal", "edahab", "mycash"],
+        "require_phone_number": true,
+        "require_transaction_reference": true,
+        "require_transaction_id": true,
+        "prevent_duplicate_transaction_id": true,
+        "allow_manual_verification": true,
+        "reconciliation_required": true
+      }
+    },
+    "inventory": {
+      "negative_stock_allowed": false,
+      "batch_tracking": true,
+      "expiry_tracking": true,
+      "low_stock_alerts": true,
+      "stock_adjustment_authorization_required": true
+    },
+    "notifications": {
+      "appointment_reminder_hours": [48, 24, 2],
+      "channels": ["SMS", "email", "WhatsApp", "in_app"],
+      "retry_attempts": 3
+    },
+    "privacy": {
+      "audit_all_patient_record_access": true,
+      "encrypt_sensitive_data_at_rest": true,
+      "encrypt_data_in_transit": true,
+      "automatic_logout_minutes": 30,
+      "minimum_password_length": 10
+    }
+  },
+  "audit_logs": [],
+  "backup": {
+    "enabled": true,
+    "frequency": "daily",
+    "retention_days": 30
+  },
+  "validation_rules": {
+    "patient_required_fields": ["first_name", "last_name", "date_of_birth", "phone"],
+    "appointment_required_fields": ["patient_id", "dentist_id", "date", "start_time", "status"],
+    "invoice_required_fields": ["patient_id", "invoice_date", "items"],
+    "payment_required_fields": ["invoice_id", "amount", "payment_method", "payment_date"]
+  },
+  "example_records": {
+    "patient": {
+      "id": "PAT-2026-00001",
+      "patient_number": "P000001",
+      "first_name": "Ahmed",
+      "last_name": "Ali",
+      "date_of_birth": "1995-01-15",
+      "gender": "male",
+      "phone": "",
+      "status": "active",
+      "medical_alerts": [],
+      "created_at": "2026-08-31T08:00:00+03:00"
+    },
+    "appointment": {
+      "id": "APT-2026-00001",
+      "patient_id": "PAT-2026-00001",
+      "dentist_id": "USR-00001",
+      "chair_id": "CHAIR-001",
+      "start_at": "2026-09-01T10:00:00+03:00",
+      "end_at": "2026-09-01T10:30:00+03:00",
+      "reason": "Dental examination",
+      "status": "scheduled"
+    },
+    "invoice": {
+      "id": "INV-2026-00001",
+      "invoice_number": "INV-2026-00001",
+      "patient_id": "PAT-2026-00001",
+      "currency": "USD",
+      "items": [
+        {
+          "fee_id": "FEE-002",
+          "description": "Comprehensive Dental Examination",
+          "quantity": 1,
+          "unit_price": 25,
+          "discount": 0,
+          "tax": 0,
+          "total": 25
+        }
+      ],
+      "subtotal": 25,
+      "discount": 0,
+      "tax": 0,
+      "total": 25,
+      "paid": 0,
+      "balance": 25,
+      "status": "issued"
+    },
+    "payment": {
+      "id": "PAY-2026-00001",
+      "payment_number": "PAY-2026-00001",
+      "patient_id": "PAT-2026-00001",
+      "invoice_id": "INV-2026-00001",
+      "amount": 25,
+      "currency": "USD",
+      "method": "mobile_money",
+      "reference_number": "TXN-000001",
+      "status": "completed",
+      "received_at": "2026-09-01T10:35:00+03:00"
+    },
+    "mobile_money_payments": [
+      {
+        "id": "PAY-2026-ZAAD-00001",
+        "payment_number": "PAY-2026-000101",
+        "invoice_id": "INV-2026-00001",
+        "patient_id": "PAT-2026-00001",
+        "method": "zaad",
+        "provider": "Telesom",
+        "payer_phone": "",
+        "amount": 25.0,
+        "currency": "USD",
+        "transaction_id": "ZAAD-TXN-EXAMPLE-001",
+        "reference_number": "ZAAD-REF-001",
+        "status": "completed",
+        "verification_status": "verified"
+      },
+      {
+        "id": "PAY-2026-SAHAL-00001",
+        "payment_number": "PAY-2026-000102",
+        "invoice_id": "INV-2026-00002",
+        "patient_id": "PAT-2026-00002",
+        "method": "sahal",
+        "provider": "Golis",
+        "payer_phone": "",
+        "amount": 40.0,
+        "currency": "USD",
+        "transaction_id": "SAHAL-TXN-EXAMPLE-001",
+        "reference_number": "SAHAL-REF-001",
+        "status": "completed",
+        "verification_status": "verified"
+      },
+      {
+        "id": "PAY-2026-EDAHAB-00001",
+        "payment_number": "PAY-2026-000103",
+        "invoice_id": "INV-2026-00003",
+        "patient_id": "PAT-2026-00003",
+        "method": "edahab",
+        "provider": "Somtel",
+        "payer_phone": "",
+        "amount": 50.0,
+        "currency": "USD",
+        "transaction_id": "EDAHAB-TXN-EXAMPLE-001",
+        "reference_number": "EDAHAB-REF-001",
+        "status": "completed",
+        "verification_status": "verified"
+      },
+      {
+        "id": "PAY-2026-MYCASH-00001",
+        "payment_number": "PAY-2026-000104",
+        "invoice_id": "INV-2026-00004",
+        "patient_id": "PAT-2026-00004",
+        "method": "mycash",
+        "provider": "Somlink",
+        "payer_phone": "",
+        "amount": 30.0,
+        "currency": "USD",
+        "transaction_id": "MYCASH-TXN-EXAMPLE-001",
+        "reference_number": "MYCASH-REF-001",
+        "status": "completed",
+        "verification_status": "verified"
+      }
+    ]
+  },
+  "modules": {
+    "authentication_authorization": {
+      "users": [],
+      "roles": [],
+      "permissions": [],
+      "sessions": [],
+      "login_attempts": [],
+      "password_policies": {},
+      "two_factor_authentication": { "enabled": false, "methods": ["totp", "sms", "email"] },
+      "access_control": { "principle": "least_privilege", "record_level_security": true }
+    },
+    "clinic_configuration": {
+      "clinic": {},
+      "branches": [],
+      "departments": [],
+      "rooms": [],
+      "chairs": [],
+      "equipment": [],
+      "working_hours": [],
+      "holidays": [],
+      "appointment_types": [],
+      "service_categories": [],
+      "services": [],
+      "fee_schedules": [],
+      "taxes": [],
+      "payment_methods": [],
+      "insurance_providers": []
+    },
+    "patient_management": {
+      "patients": [],
+      "patient_identifiers": [],
+      "emergency_contacts": [],
+      "guardians": [],
+      "consents": [],
+      "patient_tags": [],
+      "patient_notes": [],
+      "patient_documents": [],
+      "patient_communications": [],
+      "patient_portal_accounts": [],
+      "merge_history": [],
+      "archived_patients": []
+    },
+    "medical_history": {
+      "medical_histories": [],
+      "conditions": [],
+      "allergies": [],
+      "medications": [],
+      "medication_history": [],
+      "surgeries": [],
+      "hospitalizations": [],
+      "family_history": [],
+      "social_history": [],
+      "vital_signs": [],
+      "pregnancy_records": [],
+      "risk_assessments": []
+    },
+    "appointments": {
+      "appointments": [],
+      "recurring_appointments": [],
+      "appointment_slots": [],
+      "waitlist": [],
+      "waiting_queue": [],
+      "check_ins": [],
+      "no_show_records": [],
+      "cancellations": [],
+      "reschedules": [],
+      "appointment_reminders": []
+    },
+    "clinical": {
+      "encounters": [],
+      "chief_complaints": [],
+      "clinical_notes": [],
+      "examinations": [],
+      "diagnoses": [],
+      "diagnosis_codes": [],
+      "treatment_plans": [],
+      "treatment_plan_items": [],
+      "procedures": [],
+      "procedure_notes": [],
+      "clinical_measurements": [],
+      "follow_ups": [],
+      "referrals": [],
+      "clinical_alerts": []
+    },
+    "dental_charting": {
+      "tooth_numbering": "FDI",
+      "teeth": [],
+      "tooth_surfaces": [],
+      "tooth_conditions": [],
+      "periodontal_charts": [],
+      "periodontal_measurements": [],
+      "odontograms": [],
+      "tooth_history": [],
+      "orthodontic_records": [],
+      "implant_records": [],
+      "prosthetic_records": []
+    },
+    "imaging": {
+      "imaging_orders": [],
+      "imaging_results": [],
+      "radiographs": [],
+      "image_files": [],
+      "image_annotations": [],
+      "imaging_templates": []
+    },
+    "prescriptions": {
+      "prescriptions": [],
+      "prescription_items": [],
+      "drug_catalog": [],
+      "dosage_forms": [],
+      "routes": [],
+      "dispensing_records": [],
+      "drug_interactions": [],
+      "prescription_templates": []
+    },
+    "laboratory": {
+      "lab_orders": [],
+      "lab_order_items": [],
+      "lab_cases": [],
+      "lab_materials": [],
+      "lab_status_history": [],
+      "lab_invoices": [],
+      "lab_results": [],
+      "lab_partners": []
+    },
+    "treatment_services": {
+      "treatments": [],
+      "procedures_catalog": [],
+      "packages": [],
+      "treatment_sessions": [],
+      "treatment_outcomes": [],
+      "clinical_templates": []
+    },
+    "billing_finance": {
+      "fee_items": [],
+      "price_lists": [],
+      "price_list_items": [],
+      "invoices": [],
+      "invoice_items": [],
+      "payments": [],
+      "payment_allocations": [],
+      "receipts": [],
+      "refunds": [],
+      "credit_notes": [],
+      "debit_notes": [],
+      "discounts": [],
+      "payment_plans": [],
+      "installments": [],
+      "accounts_receivable": [],
+      "cash_registers": [],
+      "cash_transactions": [],
+      "daily_closings": [],
+      "expenses": [],
+      "expense_categories": [],
+      "income_adjustments": [],
+      "insurance_claims": [],
+      "insurance_claim_items": []
+    },
+    "inventory": {
+      "categories": [],
+      "items": [],
+      "units": [],
+      "batches": [],
+      "stock_levels": [],
+      "stock_movements": [],
+      "stock_adjustments": [],
+      "low_stock_alerts": [],
+      "expiry_alerts": [],
+      "suppliers": [],
+      "purchase_orders": [],
+      "purchase_order_items": [],
+      "goods_received": [],
+      "goods_received_items": [],
+      "returns_to_supplier": [],
+      "consumption_records": []
+    },
+    "staff_management": {
+      "staff": [],
+      "dentists": [],
+      "specializations": [],
+      "staff_schedules": [],
+      "leave_requests": [],
+      "attendance": [],
+      "commissions": [],
+      "staff_documents": []
+    },
+    "communication": {
+      "sms": [],
+      "email": [],
+      "whatsapp": [],
+      "templates": [],
+      "notification_queue": [],
+      "delivery_logs": [],
+      "communication_preferences": []
+    },
+    "documents": {
+      "documents": [],
+      "document_types": [],
+      "attachments": [],
+      "consent_forms": [],
+      "signed_forms": [],
+      "document_versions": []
+    },
+    "reporting_analytics": {
+      "saved_reports": [],
+      "dashboard_widgets": [],
+      "report_exports": [],
+      "kpis": [],
+      "audit_report_runs": []
+    },
+    "operations": {
+      "tasks": [],
+      "tasks_comments": [],
+      "incident_reports": [],
+      "maintenance_requests": [],
+      "equipment_service_logs": [],
+      "sterilization_cycles": [],
+      "sterilization_logs": [],
+      "infection_control_checklists": []
+    },
+    "security_compliance": {
+      "audit_logs": [],
+      "data_access_logs": [],
+      "consent_logs": [],
+      "privacy_requests": [],
+      "data_export_requests": [],
+      "data_deletion_requests": [],
+      "security_events": [],
+      "backup_jobs": [],
+      "restore_jobs": []
+    },
+    "integrations": {
+      "payment_gateways": [],
+      "sms_providers": [],
+      "email_providers": [],
+      "whatsapp_providers": [],
+      "accounting_integrations": [],
+      "lab_integrations": [],
+      "api_keys": [],
+      "webhooks": [],
+      "integration_logs": []
+    }
+  },
+  "reference_data": {
+    "appointment_statuses": [
+      "scheduled",
+      "confirmed",
+      "checked_in",
+      "in_treatment",
+      "completed",
+      "cancelled",
+      "rescheduled",
+      "no_show"
+    ],
+    "patient_statuses": ["active", "inactive", "archived", "deceased"],
+    "invoice_statuses": [
+      "draft",
+      "issued",
+      "partially_paid",
+      "paid",
+      "overdue",
+      "cancelled",
+      "refunded",
+      "written_off"
+    ],
+    "payment_statuses": ["pending", "completed", "failed", "cancelled", "refunded", "partially_refunded"],
+    "payment_methods": ["cash", "card", "bank_transfer", "mobile_money", "insurance"],
+    "treatment_statuses": ["planned", "accepted", "in_progress", "completed", "cancelled", "declined"],
+    "lab_statuses": [
+      "ordered",
+      "received_by_lab",
+      "in_production",
+      "ready",
+      "received_by_clinic",
+      "fitted",
+      "returned",
+      "cancelled"
+    ],
+    "stock_movement_types": [
+      "purchase",
+      "sale",
+      "consumption",
+      "return",
+      "adjustment_in",
+      "adjustment_out",
+      "transfer_in",
+      "transfer_out",
+      "expired"
+    ],
+    "tooth_statuses": [
+      "healthy",
+      "caries",
+      "restored",
+      "missing",
+      "extracted",
+      "root_canal",
+      "crown",
+      "implant",
+      "bridge",
+      "fractured",
+      "impacted"
+    ],
+    "consent_types": [
+      "general_treatment",
+      "anesthesia",
+      "extraction",
+      "surgery",
+      "root_canal",
+      "implant",
+      "prosthodontic",
+      "orthodontic",
+      "radiography",
+      "privacy"
+    ],
+    "mobile_money_methods": ["zaad", "sahal", "edahab", "mycash"]
+  },
+  "business_rules": {
+    "patient": [
+      "Patient number must be unique.",
+      "Detect possible duplicates using configurable matching rules.",
+      "Show critical medical alerts before treatment.",
+      "Archived patients are read-only unless authorized."
+    ],
+    "appointments": [
+      "Prevent dentist and chair double-booking.",
+      "Retain cancellation/reschedule history.",
+      "Completed visits may create encounters and invoices."
+    ],
+    "clinical": [
+      "Signed notes cannot be silently edited.",
+      "Corrections require an amendment/audit trail.",
+      "Prescriptions identify patient and prescriber.",
+      "Clinical records link to patient and encounter."
+    ],
+    "billing": [
+      "Invoice totals must reconcile exactly.",
+      "Payment allocations cannot exceed outstanding balance.",
+      "Completed payments generate receipts.",
+      "Refunds reference original payments.",
+      "Cash registers require reconciliation.",
+      "Financial records are never physically deleted."
+    ],
+    "inventory": [
+      "Block negative stock by default.",
+      "Do not issue expired stock.",
+      "Track batch and expiry.",
+      "Authorize stock adjustments."
+    ],
+    "security": [
+      "Audit protected patient-record access.",
+      "Enforce permissions server-side.",
+      "Use soft deletion where appropriate.",
+      "Test backups with restore verification."
+    ],
+    "mobile_money": [
+      "Every mobile-money payment must record the provider.",
+      "Every mobile-money payment must record the payer phone number.",
+      "Every completed mobile-money payment must have a transaction/reference identifier.",
+      "Duplicate transaction IDs must be rejected or flagged.",
+      "A payment must not be marked completed solely because a reference was entered; verification status must be tracked.",
+      "Refunds and reversals must reference the original payment transaction.",
+      "Daily provider totals must be reconcilable against DCMS totals.",
+      "Provider credentials/API keys must never be stored in ordinary payment records."
+    ]
+  },
+  "required_workflows": [
+    "Patient Registration",
+    "Appointment Booking",
+    "Patient Check-In",
+    "Dental Examination",
+    "Odontogram Update",
+    "Diagnosis",
+    "Treatment Planning",
+    "Treatment Acceptance",
+    "Treatment Session",
+    "Prescription",
+    "Laboratory Order",
+    "Imaging Order",
+    "Invoice Generation",
+    "Payment Collection",
+    "Receipt Generation",
+    "Refund",
+    "Payment Plan",
+    "Insurance Claim",
+    "Inventory Purchase",
+    "Inventory Consumption",
+    "Low Stock Monitoring",
+    "Daily Cash Closing",
+    "Staff Scheduling",
+    "Appointment Reminder",
+    "Follow-Up Reminder",
+    "Clinical Record Sign-Off",
+    "Audit Review",
+    "Backup and Restore"
+  ],
+  "required_reports": [
+    "Daily Appointment List",
+    "Doctor Schedule",
+    "Patient Registration Report",
+    "New vs Returning Patients",
+    "Treatment Statistics",
+    "Diagnosis Statistics",
+    "Outstanding Balances",
+    "Daily Revenue",
+    "Revenue by Dentist",
+    "Revenue by Service",
+    "Payment Method Summary",
+    "Refund Report",
+    "Discount Report",
+    "Cash Register Report",
+    "Daily Closing Report",
+    "Accounts Receivable Aging",
+    "Insurance Claims Aging",
+    "Inventory Valuation",
+    "Low Stock Report",
+    "Expired Stock Report",
+    "Purchasing Report",
+    "Laboratory Status Report",
+    "No-Show Report",
+    "Cancellation Report",
+    "Patient Follow-Up Report",
+    "Audit Log Report"
+  ],
+  "api_contract": {
+    "base_path": "/api/v1",
+    "resources": {
+      "auth": ["login", "logout", "refresh", "change-password", "me"],
+      "patients": ["list", "create", "get", "update", "archive", "merge", "documents"],
+      "appointments": ["availability", "list", "create", "update", "cancel", "check-in", "complete"],
+      "clinical": ["encounters", "notes", "diagnoses", "treatment-plans", "procedures", "follow-ups"],
+      "dental-chart": ["odontogram", "teeth", "periodontal-chart"],
+      "prescriptions": ["list", "create", "print", "dispense"],
+      "imaging": ["orders", "results", "attachments"],
+      "laboratory": ["orders", "cases", "results"],
+      "billing": ["fees", "invoices", "payments", "receipts", "refunds", "payment-plans", "claims"],
+      "inventory": ["items", "stock", "movements", "purchase-orders", "suppliers"],
+      "staff": ["staff", "schedules", "attendance", "leave"],
+      "reports": ["dashboard", "revenue", "patients", "appointments", "inventory", "finance", "audit"],
+      "settings": ["clinic", "users", "roles", "services", "fees", "notifications"]
+    }
+  },
+  "data_quality": {
+    "required_global_fields": ["id", "created_at", "created_by", "updated_at", "updated_by"],
+    "soft_delete": true,
+    "timestamps": "ISO-8601",
+    "money_storage": "decimal",
+    "unique_keys": [
+      "patient.patient_number",
+      "appointment.id",
+      "invoice.invoice_number",
+      "payment.payment_number",
+      "receipt.receipt_number"
+    ]
+  },
+  "payment_system": {
+    "mobile_money_providers": [
+      {
+        "id": "zaad",
+        "name": "ZAAD",
+        "provider": "Telesom",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      },
+      {
+        "id": "sahal",
+        "name": "Sahal",
+        "provider": "Golis",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      },
+      {
+        "id": "edahab",
+        "name": "eDahab",
+        "provider": "Somtel",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      },
+      {
+        "id": "mycash",
+        "name": "MyCash",
+        "provider": "Somlink",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      }
+    ],
+    "supported_methods": [
+      {
+        "id": "cash",
+        "name": "Cash",
+        "type": "cash",
+        "requires_phone": false,
+        "requires_reference": false,
+        "requires_transaction_id": false,
+        "active": true
+      },
+      {
+        "id": "card",
+        "name": "Card",
+        "type": "card",
+        "requires_phone": false,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "active": true
+      },
+      {
+        "id": "bank_transfer",
+        "name": "Bank Transfer",
+        "type": "bank_transfer",
+        "requires_phone": false,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "active": true
+      },
+      {
+        "id": "zaad",
+        "name": "ZAAD",
+        "provider": "Telesom",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      },
+      {
+        "id": "sahal",
+        "name": "Sahal",
+        "provider": "Golis",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      },
+      {
+        "id": "edahab",
+        "name": "eDahab",
+        "provider": "Somtel",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      },
+      {
+        "id": "mycash",
+        "name": "MyCash",
+        "provider": "Somlink",
+        "type": "mobile_money",
+        "currency": "USD",
+        "requires_phone": true,
+        "requires_reference": true,
+        "requires_transaction_id": true,
+        "supports_refund": true,
+        "supports_reversal": true,
+        "active": true
+      },
+      {
+        "id": "insurance",
+        "name": "Insurance",
+        "type": "insurance",
+        "requires_phone": false,
+        "requires_reference": true,
+        "requires_transaction_id": false,
+        "active": true
+      }
+    ],
+    "mobile_money_transaction_fields": [
+      "id",
+      "payment_id",
+      "patient_id",
+      "invoice_id",
+      "provider",
+      "payer_phone",
+      "amount",
+      "currency",
+      "transaction_id",
+      "reference_number",
+      "transaction_date",
+      "status",
+      "verification_status",
+      "verified_by",
+      "verified_at",
+      "reversal_reference",
+      "refund_reference",
+      "notes"
+    ],
+    "transaction_statuses": [
+      "pending",
+      "completed",
+      "failed",
+      "reversed",
+      "refunded",
+      "partially_refunded",
+      "duplicate",
+      "verification_required"
+    ],
+    "reconciliation": {
+      "enabled": true,
+      "daily": true,
+      "fields": [
+        "provider",
+        "transaction_count",
+        "system_total",
+        "provider_total",
+        "difference",
+        "reconciled_by",
+        "reconciled_at",
+        "status",
+        "notes"
+      ]
+    }
+  }
+}
