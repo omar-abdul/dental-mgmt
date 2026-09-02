@@ -52,4 +52,11 @@ class TreatmentFactory extends Factory
             ];
         });
     }
+
+    public function completed(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => TreatmentStatus::Completed,
+        ]);
+    }
 }

@@ -12,7 +12,9 @@ use App\Models\PatientAllergy;
 use App\Models\PatientCondition;
 use App\Models\PatientMedication;
 use App\Services\PatientNumberGenerator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,32 @@ use Inertia\Response;
 
 class PatientController extends Controller
 {
+    public function search(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Patient::class);
+
+        $search = trim((string) $request->query('q', ''));
+
+        if ($search === '') {
+            return response()->json(['patients' => []]);
+        }
+
+        $patients = Patient::query()
+            ->where('status', '!=', PatientStatus::Archived)
+            ->where(function ($query) use ($search): void {
+                $this->applyPatientSearch($query, $search);
+            })
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->limit(15)
+            ->get(['id', 'first_name', 'last_name', 'patient_number', 'phone'])
+            ->map(fn (Patient $patient) => $this->patientSearchResult($patient))
+            ->values()
+            ->all();
+
+        return response()->json(['patients' => $patients]);
+    }
+
     public function index(Request $request): Response
     {
         Gate::authorize('viewAny', Patient::class);
@@ -31,12 +59,7 @@ class PatientController extends Controller
         $patients = Patient::withTrashed()
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
-                    $query->where('patient_number', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
-                        ->orWhere('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%");
+                    $this->applyPatientSearch($query, $search);
                 });
             })
             ->orderBy('last_name')
@@ -171,6 +194,33 @@ class PatientController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Patient archived.')]);
 
         return to_route('patients.show', $patient);
+    }
+
+    /**
+     * @param  Builder<Patient>  $query
+     */
+    private function applyPatientSearch($query, string $search): void
+    {
+        $query->where('patient_number', 'like', "%{$search}%")
+            ->orWhere('phone', 'like', "%{$search}%")
+            ->orWhere('email', 'like', "%{$search}%")
+            ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+            ->orWhere('first_name', 'like', "%{$search}%")
+            ->orWhere('last_name', 'like', "%{$search}%");
+    }
+
+    /**
+     * @return array{id: int, label: string, patient_number: string, full_name: string, phone: string}
+     */
+    private function patientSearchResult(Patient $patient): array
+    {
+        return [
+            'id' => $patient->id,
+            'label' => "{$patient->first_name} {$patient->last_name} ({$patient->patient_number})",
+            'patient_number' => $patient->patient_number,
+            'full_name' => "{$patient->first_name} {$patient->last_name}",
+            'phone' => $patient->phone,
+        ];
     }
 
     /**

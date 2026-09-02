@@ -1,98 +1,103 @@
-# Review results — G4 Treatments and prescriptions
+# Review results — G5 Billing and payments
 
 - Date: 2026-09-03
 - Mode: verify
-- Scope: `app/Http/Controllers/TreatmentController.php`, `app/Http/Requests/StoreTreatmentRequest.php`, `app/Policies/TreatmentPolicy.php`, `app/Concerns/AppointmentValidationRules.php`, `app/Services/PrescriptionNumberGenerator.php`, `app/Http/Controllers/PatientController.php` (treatment history payload), `routes/web.php` (treatment routes), `resources/js/pages/treatments/{Index,Create,Show}.vue`, `resources/js/pages/patients/Show.vue` (history UI), `tests/Feature/TreatmentTest.php`
-- Goal: G4 — Treatments and prescriptions
+- Scope: `app/Http/Controllers/BillingController.php`, `app/Http/Requests/StorePaymentRequest.php`, `app/Http/Requests/StoreRefundRequest.php`, `app/Policies/InvoicePolicy.php`, `app/Services/InvoiceGenerator.php`, `app/Services/PaymentProcessor.php`, `app/Concerns/ConvertsDollarAmounts.php`, `routes/web.php`, `resources/js/pages/billing/{Index,Show,Receipt}.vue`, `tests/Feature/BillingTest.php`
+- Goal: G5 — Billing and payments
 
 ## Summary
 
 | ID | Severity | Status | Path | Title |
 |----|----------|--------|------|-------|
-| R1 | High | fixed | `app/Concerns/AppointmentValidationRules.php`, `app/Http/Controllers/TreatmentController.php` | Terminal appointments linkable; complete flips cancelled → completed |
-| R2 | Medium | fixed | `app/Http/Requests/StoreTreatmentRequest.php`, `app/Concerns/AppointmentValidationRules.php` | Inactive dentist/fee_item bypass (G3 validation parity gap) |
-| R3 | Medium | fixed | `app/Http/Requests/StoreTreatmentRequest.php` | Archived patients can receive new treatments (G3 R2 parity) |
-| R4 | Medium | fixed | `tests/Feature/TreatmentTest.php` | Key paths untested: store-as-completed, duplicate appointment_id, view-only GET create |
-| R5 | Low | deferred | `app/Http/Controllers/TreatmentController.php` | Create-form patient list hard-capped at 200 rows |
+| R1 | Critical | fixed | `app/Services/PaymentProcessor.php` | Concurrent refunds corrupt `amount_paid_cents` |
+| R2 | High | fixed | `app/Services/PaymentProcessor.php` | Same original payment refundable repeatedly |
+| R3 | Medium | fixed | `app/Http/Requests/StorePaymentRequest.php` | Float dollar→cents conversion (D11) |
+| R4 | Medium | fixed | `app/Http/Controllers/BillingController.php` | `pay`/`refund` omit controller `Gate::authorize` |
+| R5 | Medium | fixed | `tests/Feature/BillingTest.php` | Missing dentist pay 403 and refund-bound tests |
+| R6 | Low | deferred | `app/Services/InvoiceGenerator.php` | Invoice + line items not in one DB transaction |
 
 ## Assessment overview
 
-- Guidelines: Corrector pass applied G3 validation patterns to the clinical write path. Treatments placeholder replaced with real `TreatmentController`; `Gate::authorize` on all actions; Wayfinder imports; patient show exposes diagnosis/status/date.
-- Blast radius: No invoice/payment writes. Appointment completion side-effect guarded for terminal statuses.
-- Security: Role matrix enforced. Server-side fee cents; prescriber_id = acting user. R1–R3 validation gaps closed on store path.
-- Readability: Follows G2/G3 patterns.
-- Extensibility: `PrescriptionNumberGenerator` mirrors G3 lock pattern. R5 patient cap deferred to B15.
-- Cohesiveness: Critical allergy flags on create. `completeLinkedAppointment` skips terminal appointments (D4).
+- Guidelines: Policy roles match GOAL. `pay`/`refund` call `Gate::authorize`. Integer-safe `ConvertsDollarAmounts`. Invoice totals server-computed.
+- Blast radius: No invoice delete routes; financial FKs use `restrictOnDelete`. Refund integrity under invoice row lock.
+- Security: Role matrix enforced; MM pending does not apply balance or issue receipt.
+- Readability: Centralized `PaymentProcessor`; Wayfinder imports in billing Vue pages.
+- Extensibility: Per-payment cumulative refund cap; number generators follow G3/G4 pattern.
+- Cohesiveness: Matches §5.2 / D11 / D12. R6 deferred (Low).
 
 ## Critical
 
-None.
+### R1 — Concurrent refunds corrupt `amount_paid_cents`
+- Severity: Critical
+- Status: fixed
+- Path: `app/Services/PaymentProcessor.php`
+- Area: security
+- Finding: Refund amount validation ran on stale invoice state before `lockForUpdate`.
+- Evidence: Validated inside transaction after lock; sequential over-refund test.
+- Suggested fix: _(applied)_
 
 ## High
 
-### R1 — Terminal appointments linkable; complete flips cancelled → completed
+### R2 — Same original payment refundable repeatedly
 - Severity: High
 - Status: fixed
-- Path: `app/Concerns/AppointmentValidationRules.php`, `app/Http/Requests/StoreTreatmentRequest.php`, `app/Http/Controllers/TreatmentController.php`, `tests/Feature/TreatmentTest.php`
-- Area: security
-- Finding: Crafted POST could link cancelled/no_show/completed appointments; complete could resurrect vacated slots.
-- Evidence (verify): `linkableAppointmentExistsRule()` whitelists live statuses. `completeLinkedAppointment()` returns early for terminal statuses. Pest: cancelled appointment_id → 422.
+- Path: `app/Services/PaymentProcessor.php`
+- Area: cohesiveness
+- Finding: No cumulative cap per original payment.
+- Evidence: SUM of refunded rows by `reference_number`; double-refund test.
 - Suggested fix: _(applied)_
 
 ## Medium
 
-### R2 — Inactive dentist/fee_item bypass (G3 validation parity gap)
+### R3 — Float dollar→cents conversion (D11)
 - Severity: Medium
 - Status: fixed
-- Path: `app/Http/Requests/StoreTreatmentRequest.php`, `app/Concerns/AppointmentValidationRules.php`
+- Path: `app/Http/Requests/StorePaymentRequest.php`
 - Area: guidelines
-- Finding: Store accepted inactive dentist/fee_item IDs despite UI filtering active rows.
-- Evidence (verify): `activeDentistExistsRule()` and `activeFeeItemExistsRule()`. Pest for inactive dentist/fee item.
+- Finding: Float multiply/round for cents.
+- Evidence: `ConvertsDollarAmounts::dollarsToCents()` string split.
 - Suggested fix: _(applied)_
 
-### R3 — Archived patients can receive new treatments (G3 R2 parity)
+### R4 — `pay`/`refund` omit controller `Gate::authorize`
 - Severity: Medium
 - Status: fixed
-- Path: `app/Http/Requests/StoreTreatmentRequest.php`
+- Path: `app/Http/Controllers/BillingController.php`
 - Area: guidelines
-- Finding: Archived patients accepted on treatment store (D7 read-only violation).
-- Evidence (verify): `bookablePatientExistsRule()`. Pest: archived patient → 422.
+- Finding: Mutating actions lacked controller-level authorize.
+- Evidence: Controller now authorizes pay/refund.
 - Suggested fix: _(applied)_
 
-### R4 — Key paths untested: store-as-completed, duplicate appointment_id, view-only GET create
+### R5 — Missing dentist pay 403 and refund-bound tests
 - Severity: Medium
 - Status: fixed
-- Path: `tests/Feature/TreatmentTest.php`
-- Area: guidelines
-- Finding: Missing Pest for store-as-completed, unique `appointment_id`, receptionist/nurse GET create 403.
-- Evidence (verify): Tests present. Orchestrator Sail gate: 159 passed.
+- Path: `tests/Feature/BillingTest.php`
+- Area: extensibility
+- Finding: Incomplete role/refund test matrix.
+- Evidence: BillingTest includes dentist pay 403, refund bounds, double-refund.
 - Suggested fix: _(applied)_
 
 ## Low
 
-### R5 — Create-form patient list hard-capped at 200 rows
+### R6 — Invoice + line items not in one DB transaction
 - Severity: Low
 - Status: deferred
-- Path: `app/Http/Controllers/TreatmentController.php`
-- Area: extensibility
-- Finding: `patientOptions()` limits to 200 patients ordered by name.
-- Evidence: `patientOptions()` `->limit(200)`.
-- Suggested fix: Defer searchable picker; backlog **B15**.
-
-## Question
-
-None.
+- Path: `app/Services/InvoiceGenerator.php`
+- Area: blast-radius
+- Finding: Mid-loop failure could leave partial line items.
+- Evidence: `createInvoice()` without wrapping `DB::transaction`.
+- Suggested fix: Wrap in transaction. Backlog **B16**.
 
 ## Verify pass notes
 
 | Finding id | Prior status | Verify result | Notes |
 |------------|--------------|---------------|-------|
-| R1 | fixed | fixed | `linkableAppointmentExistsRule` + complete guard |
-| R2 | fixed | fixed | Active dentist/fee rules |
-| R3 | fixed | fixed | `bookablePatientExistsRule` |
-| R4 | fixed | fixed | Extra Pest cases; Sail 159 passed |
-| R5 | open | deferred | Backlog B15, Expires 2026-10-03 |
+| R1 | fixed | fixed | Locked refund validations |
+| R2 | fixed | fixed | Cumulative refund SUM |
+| R3 | fixed | fixed | ConvertsDollarAmounts trait |
+| R4 | fixed | fixed | Gate::authorize on pay/refund |
+| R5 | fixed | fixed | Expanded BillingTest |
+| R6 | open | deferred | Backlog B16, Expires 2026-10-03 |
 
 ### Test gate (mandatory)
 
-Orchestrator re-ran Sail after Verifier sandbox missed Docker: `./vendor/bin/sail artisan test --compact` — **159 passed** (661 assertions).
+Orchestrator re-ran Sail after Verifier sandbox missed Docker: `./vendor/bin/sail artisan test --compact` — **183 passed** (796 assertions).

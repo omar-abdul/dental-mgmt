@@ -305,6 +305,7 @@ test('index exposes working hours for selected date', function () {
         ->get(route('appointments.index', ['date' => '2026-09-02']))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
+            ->missing('patients')
             ->where('workingHours.opens_at', '08:00')
             ->where('workingHours.closes_at', '18:00')
             ->where('workingHours.is_closed', false)

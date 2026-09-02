@@ -11,7 +11,6 @@ use App\Models\AppointmentRevision;
 use App\Models\Chair;
 use App\Models\Dentist;
 use App\Models\FeeItem;
-use App\Models\Patient;
 use App\Models\WorkingHour;
 use App\Services\AppointmentNumberGenerator;
 use App\Services\AppointmentScheduler;
@@ -60,7 +59,6 @@ class AppointmentController extends Controller
             'workingHours' => $this->workingHoursPayload($workingHour),
             'columns' => $columns,
             'appointments' => $appointments,
-            'patients' => $this->patientOptions(),
             'dentists' => $this->dentistOptions(),
             'chairs' => $this->chairOptions(),
             'feeItems' => $this->feeItemOptions(),
@@ -325,6 +323,7 @@ class AppointmentController extends Controller
             'patient_id' => $appointment->patient_id,
             'fee_item_id' => $appointment->fee_item_id,
             'patient_name' => "{$appointment->patient->first_name} {$appointment->patient->last_name}",
+            'patient_label' => "{$appointment->patient->first_name} {$appointment->patient->last_name} ({$appointment->patient->patient_number})",
             'fee_name' => $appointment->feeItem?->name,
             'calendar_color' => $appointment->feeItem?->calendar_color ?? '#64748b',
             'starts_at' => $appointment->starts_at->toIso8601String(),
@@ -338,24 +337,6 @@ class AppointmentController extends Controller
             'can_cancel' => auth()->user()?->can('cancel', $appointment) ?? false,
             'can_check_in' => auth()->user()?->can('checkIn', $appointment) ?? false,
         ];
-    }
-
-    /**
-     * @return list<array{id: int, label: string}>
-     */
-    private function patientOptions(): array
-    {
-        return Patient::query()
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->limit(200)
-            ->get(['id', 'first_name', 'last_name', 'patient_number'])
-            ->map(fn (Patient $patient) => [
-                'id' => $patient->id,
-                'label' => "{$patient->first_name} {$patient->last_name} ({$patient->patient_number})",
-            ])
-            ->values()
-            ->all();
     }
 
     /**

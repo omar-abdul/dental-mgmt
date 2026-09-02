@@ -68,13 +68,19 @@ class TreatmentController extends Controller
         $user?->loadMissing('dentist');
 
         return Inertia::render('treatments/Create', [
-            'patients' => $this->patientOptions(),
             'dentists' => $this->dentistOptions(),
             'feeItems' => $this->feeItemOptions(),
             'appointments' => $this->appointmentOptions($selectedPatientId),
             'statuses' => $this->statusOptions(),
             'defaultDentistId' => $user?->dentist?->id,
             'selectedPatientId' => $selectedPatientId,
+            'selectedPatient' => $selectedPatient !== null ? [
+                'id' => $selectedPatient->id,
+                'label' => "{$selectedPatient->first_name} {$selectedPatient->last_name} ({$selectedPatient->patient_number})",
+                'patient_number' => $selectedPatient->patient_number,
+                'full_name' => "{$selectedPatient->first_name} {$selectedPatient->last_name}",
+                'phone' => $selectedPatient->phone,
+            ] : null,
             'criticalAlerts' => $this->criticalAlerts($selectedPatient),
         ]);
     }
@@ -288,24 +294,6 @@ class TreatmentController extends Controller
                 ])->values(),
             ] : null,
         ];
-    }
-
-    /**
-     * @return list<array{id: int, label: string}>
-     */
-    private function patientOptions(): array
-    {
-        return Patient::query()
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->limit(200)
-            ->get(['id', 'first_name', 'last_name', 'patient_number'])
-            ->map(fn (Patient $patient) => [
-                'id' => $patient->id,
-                'label' => "{$patient->first_name} {$patient->last_name} ({$patient->patient_number})",
-            ])
-            ->values()
-            ->all();
     }
 
     /**

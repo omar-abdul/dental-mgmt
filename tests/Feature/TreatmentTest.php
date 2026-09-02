@@ -243,8 +243,22 @@ test('create form shows critical allergy alerts for selected patient', function 
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('treatments/Create')
+            ->missing('patients')
+            ->where('selectedPatient.id', $patient->id)
             ->where('criticalAlerts.allergies.0.label', 'Penicillin')
             ->where('criticalAlerts.allergies', fn ($allergies) => count($allergies) === 1));
+});
+
+test('treatment create no longer includes patient options list', function () {
+    $dentistUser = User::factory()->dentist()->create();
+    Dentist::factory()->forUser($dentistUser)->create();
+
+    $this->actingAs($dentistUser)
+        ->get(route('treatments.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('treatments/Create')
+            ->missing('patients'));
 });
 
 test('fee cents ignores client-provided values and uses catalog price times quantity', function () {

@@ -2,6 +2,26 @@
 
 Per-run fix log for goal-workflow Corrector appends. Architecture goal completions go in root `changelog.md`.
 
+## 2026-09-03 — G5 Billing and payments — correct pass
+
+### Fixed
+
+- **R1** — Refund amount validations moved inside `DB::transaction` after `lockForUpdate()`; re-reads `amount_paid_cents` under lock (`PaymentProcessor.php`, `BillingTest.php`)
+- **R2** — Cumulative refund cap per original payment via `SUM` of refunded rows sharing `reference_number` (`PaymentProcessor.php`, `BillingTest.php`)
+- **R3** — Integer-safe dollar→cents via `ConvertsDollarAmounts` trait (string split, no float multiply) (`ConvertsDollarAmounts.php`, `StorePaymentRequest.php`, `StoreRefundRequest.php`)
+- **R4** — Added `Gate::authorize('pay'|'refund', $invoice)` in `BillingController` pay/refund actions (`BillingController.php`)
+- **R5** — Added Pest: dentist pay 403, refund > original 422, double-refund same payment 422, sequential over-refund guard (`BillingTest.php`)
+
+### Deferred / wontfix
+
+- **R6** — Invoice + line items transaction wrap deferred (Low, out of scope).
+
+### Notes
+
+- Findings touched: R1–R5 fixed; R6 left open (Low, backlog)
+- Tests / checks run: `vendor/bin/pint --dirty --format agent`; `./vendor/bin/sail artisan test --compact --filter=BillingTest` — 24 passed
+- R1 concurrent behavior verified via sequential over-refund test (lock re-validates `amount_paid_cents` after first refund)
+
 ## 2026-09-03 — G4 Treatments and prescriptions — correct pass
 
 ### Fixed

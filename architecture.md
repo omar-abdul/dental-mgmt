@@ -70,20 +70,22 @@ dependencies** without user approval.
 
 ## 3. Current state
 
-**Shipped:** G0 clinic foundation, G1 Wave 1 schema, G2 patient management, G3 appointment scheduling, G4 treatments and prescriptions, and G6 basic inventory.
+**Shipped:** G0 clinic foundation, G1 Wave 1 schema, G2 patient management, G3 appointment scheduling, G4 treatments and prescriptions, G5 billing and payments, G6 basic inventory, and G7 dashboard.
 
 - Single-clinic Fortify session (no `{current_team}` / teams)
 - Six `ClinicRole` values on `users.role`; public registration off
 - Admin-only staff create; password min 10; session 30 minutes
 - Brand Golden Smile Dental Clinic; timezone `Africa/Mogadishu`
-- Split login + navy Wave 1 chrome (placeholders remain for billing, reports)
+- Split login + navy Wave 1 chrome (reports hub still placeholder)
 - Wave 1 tables, models, factories; DCMS fee catalog + working hours seeded; integer cents
 - Patients: register/search/show/update/archive; unique `PAT-{YYYY}-{#####}`; audit on show
-- Appointments: day calendar from `working_hours`; book/edit/cancel/reschedule/check-in; dentist/chair overlap 422; Friday/outside-hours 422
-- Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only
+- Appointments: day calendar from `working_hours`; book/edit/cancel/reschedule/check-in; dentist/chair overlap 422; Friday/outside-hours 422; patient typeahead on book/edit
+- Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only; patient typeahead on create
+- Billing: invoice from completed treatment; partial/overpay rules; recorded ZAAD/Sahal/eDahab/MyCash; receipts; Admin/Accountant refunds; Dentist view-only
 - Inventory: four cards, search, add, adjust with movements; derived stock badges; no negative qty
+- Dashboard: four role-scoped KPI cards, Mon–Sun weekly visits, recent activity, upcoming today; Lab limited
 
-**Next:** G5 (billing and payments). G7 still waits for G5 (G2–G4 and G6 are done).
+**Next:** G8 (reports). G2–G7 are done.
 
 ---
 
@@ -503,18 +505,18 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** money + mobile-money recording rules
 - **Depends on:** G4
 
-- [ ] Invoice from completed treatment/fee lines; `invoice_number` unique;
+- [x] Invoice from completed treatment/fee lines; `invoice_number` unique;
       totals reconcile in cents
-- [ ] Partial pay allowed; overpay rejected; statuses issued/partially_paid/paid
-- [ ] Cash: no extra refs. Card/bank: reference required.
+- [x] Partial pay allowed; overpay rejected; statuses issued/partially_paid/paid
+- [x] Cash: no extra refs. Card/bank: reference required.
       ZAAD/Sahal/eDahab/MyCash: phone + transaction_id + reference; duplicate
       transaction_id 422; `verification_status` required (cannot complete on
       reference alone)
-- [ ] Completed payment creates receipt (`RCT-…`); printable view; billing index
-- [ ] Refunds (Admin/Accountant) reference original payment; invoices not
+- [x] Completed payment creates receipt (`RCT-…`); printable view; billing index
+- [x] Refunds (Admin/Accountant) reference original payment; invoices not
       hard-deleted
-- [ ] Dentist can view invoices, not generate/pay; Lab 403 billing
-- [ ] Feature tests: generate, partial, overpay fail, duplicate ZAAD txn,
+- [x] Dentist can view invoices, not generate/pay; Lab 403 billing
+- [x] Feature tests: generate, partial, overpay fail, duplicate ZAAD txn,
       receptionist pay, dentist 403 generate
 
 ---
@@ -542,10 +544,10 @@ May run after G1 in parallel with G2–G5. G7 still waits for G2–G6.
 - **Why:** read-model
 - **Depends on:** G2, G3, G4, G5, G6
 
-- [ ] KPIs: today’s appointments, active patients, unpaid/issued invoices,
+- [x] KPIs: today’s appointments, active patients, unpaid/issued invoices,
       low-stock items
-- [ ] Weekly visits Mon–Sun; recent `activity_logs`; today’s upcoming table
-- [ ] Feature test: factory/seeded counts match cards
+- [x] Weekly visits Mon–Sun; recent `activity_logs`; today’s upcoming table
+- [x] Feature test: factory/seeded counts match cards
 
 ---
 

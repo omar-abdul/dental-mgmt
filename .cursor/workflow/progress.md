@@ -7,13 +7,13 @@
 
 | Task id | Blocker | Since | Needed from |
 |---------|---------|-------|-------------|
-| | | | |
+| | | YYYY-MM-DD | user / dep / env |
 
 ## Incomplete after verify
 
 | Task id | What’s left | Severity residue | Next step |
 |---------|-------------|------------------|-----------|
-| | | | |
+| | | Critical / High / Medium / Low | |
 
 ## Backlog (deferred Low / Question)
 
@@ -115,14 +115,6 @@
 - Expires: 2026-10-03
 - Updated: 2026-09-03
 
-### B13 — Book dialog patient list capped at 200 (G3 R9)
-- Related findings: R9
-- Status: deferred
-- What's left: Searchable patient picker before G9 demo scale
-- Why: Low
-- Expires: 2026-10-03
-- Updated: 2026-09-03
-
 ### B14 — Completed appointments block same-slot rebooking (G3 R10)
 - Related findings: R10
 - Status: deferred
@@ -131,10 +123,10 @@
 - Expires: 2026-10-03
 - Updated: 2026-09-03
 
-### B15 — Treatment create patient list capped at 200 (G4 R5)
-- Related findings: R5
+### B16 — Invoice generate transaction wrap (G5 R6)
+- Related findings: R6
 - Status: deferred
-- What's left: Searchable patient picker on treatments create form before G9 demo scale (mirrors G3 B13)
+- What's left: Wrap `InvoiceGenerator::createInvoice()` invoice + line items in `DB::transaction()` to avoid partial invoices on mid-loop failure
 - Why: Low
 - Expires: 2026-10-03
 - Updated: 2026-09-03

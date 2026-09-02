@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\PatientController;
@@ -17,6 +18,7 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    Route::get('patients/search', [PatientController::class, 'search'])->name('patients.search');
     Route::resource('patients', PatientController::class)->except(['destroy']);
     Route::post('patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
     Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
@@ -29,7 +31,12 @@ Route::middleware('auth')->group(function () {
     Route::post('treatments', [TreatmentController::class, 'store'])->name('treatments.store');
     Route::get('treatments/{treatment}', [TreatmentController::class, 'show'])->name('treatments.show');
     Route::post('treatments/{treatment}/complete', [TreatmentController::class, 'complete'])->name('treatments.complete');
-    Route::get('billing', [PlaceholderModuleController::class, 'billing'])->name('billing.index');
+    Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('billing/receipts/{receipt}', [BillingController::class, 'showReceipt'])->name('billing.receipts.show');
+    Route::get('billing/{invoice}', [BillingController::class, 'show'])->name('billing.show');
+    Route::post('treatments/{treatment}/invoice', [BillingController::class, 'generateFromTreatment'])->name('billing.invoices.generate');
+    Route::post('billing/{invoice}/payments', [BillingController::class, 'pay'])->name('billing.payments.store');
+    Route::post('billing/{invoice}/refunds', [BillingController::class, 'refund'])->name('billing.refunds.store');
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::post('inventory', [InventoryController::class, 'store'])->name('inventory.store');
     Route::post('inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');

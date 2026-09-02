@@ -1,50 +1,44 @@
-# GOAL — Treatments and prescriptions
+# GOAL — G7 Dashboard
 
-- **Architecture id:** G4
-- **Mode:** A
-- **Why:** clinical write path
+- **Architecture id:** G7
+- **Mode:** A-light
+- **Why:** read-model KPIs and lists; no money mutations, session, or schema other goals depend on
 - **Started:** 2026-09-03
 - **Closed:** 2026-09-03
-- **Owner run:** g4-treatments-prescriptions
+- **Owner run:** g7-dashboard
 
 ## Summary
 
-Replace the treatments placeholder so Dentist/Admin can record diagnosis, fee-item procedures, and a prescription (prescriber = logged-in user). Completing a treatment may set the linked appointment to `completed`. Patient show lists treatment history. Nurse views, cannot POST Rx. Receptionist is view-only. Critical allergy flags are visible on the treatment form.
+Replace the Overview placeholder with live clinic KPIs (today’s appointments, active patients, unpaid/issued invoices, low-stock items), a Mon–Sun weekly visits chart, a recent `activity_logs` feed, and today’s upcoming appointments table. Counts use `Africa/Mogadishu`. Role-scoped: omit module data the viewer cannot see (Lab limited).
 
-**Closed.** T1–T3 completed. Mode A: R1 High + R2–R4 Medium fixed; R5 deferred to B15. Sail test gate 159 passed.
+**Closed.** T1–T3 completed. A-light Sail gate 198 passed.
 
 ## Scope in
 
-- Inertia treatments index (keep route name `treatments.index`) plus create/show as needed
-- `TreatmentPolicy`: view Admin/Dentist/Receptionist/Nurse; write (create/update/complete/Rx) Admin/Dentist only
-- Diagnosis, procedures (`fee_items`, optional `tooth_fdi`, quantity; `fee_cents` from fee catalog × quantity, integer cents)
-- Prescription + items; `prescriber_id` is the authenticated user; sequential `RX-{YYYY}-{#####}` with lock (match G2/G3 generators)
-- Completing treatment with `appointment_id` may set that appointment `completed`
-- Patient show treatment history (not just `#id`)
-- Critical allergy (`is_critical`) flags visible on the treatment form
-- Pest: create treatment+rx, history on patient show, 403s (Nurse POST Rx, Receptionist mutate, Accountant/Lab GET)
-- Wayfinder Vue imports (`@/actions`, `@/routes`)
-- Keep Receptionist GET `treatments.index` 200 (`PlaceholderModuleTest`)
+- `DashboardController` + `resources/js/pages/Dashboard.vue`
+- Queries against existing Wave 1 tables (no new migrations)
+- Pest on factory-seeded counts and role omission
+- Reuse inventory Card UI patterns; CSS bars for weekly visits (no new npm packages)
 
 ## Scope out
 
-- Invoices / payments (G5)
-- Odontogram / chart lock (G10)
-- Lab orders (G11)
-- G9 named demo treatments
-- REST `/api/v1`, new Composer/npm packages
-- Do not hide Receptionist Treatments nav (B2: view-only; mutations 403)
+- G8 reports hub, G9 screenshot KPI seed totals (1,284 patients, etc.)
+- Writing `activity_logs` from G2–G6 mutations (display existing/factory rows; empty state OK)
+- Chart libraries, WebSockets, caching layers
+- Changing nav / ClinicRole module matrix except using `canViewModule` to omit props
 
-## Verification (from architecture or user)
+## Verification (from architecture)
 
-- [x] Dentist/Admin record diagnosis, procedures (fee_items), prescription + items; prescriber is the user
-- [x] Completing treatment may set appointment `completed`
-- [x] Patient show lists history; Nurse can view, not POST Rx; Receptionist view-only
-- [x] Critical allergy flags visible on the treatment form
-- [x] Feature tests: create treatment+rx, history, 403s
+- [x] KPIs: today’s appointments, active patients, unpaid/issued invoices, low-stock items
+- [x] Weekly visits Mon–Sun; recent `activity_logs`; today’s upcoming table
+- [x] Feature test: factory/seeded counts match cards
 
 ## Notes
 
-- Architecture §5.2 treatments/prescriptions, §6 Treatments/Rx write row, D11 cents. Empty Controller → `Gate::authorize`.
-- Host PHP 8.3; tests: `./vendor/bin/sail artisan test --compact`. Do **not** `migrate:fresh` without `--seed`.
-- Prior Backlog B1–B14 remain; G4 residue B15 expires 2026-10-03.
+- Timezone: `config('app.timezone')` (`Africa/Mogadishu`). Freeze time in tests with `travelTo`.
+- Vacated appointment statuses (do not count): `cancelled`, `no_show`, `rescheduled`.
+- Unpaid/issued invoices: `issued`, `partially_paid`, `overdue` — not draft/paid/cancelled/refunded/written_off.
+- Active patients: `PatientStatus::Active`, not trashed.
+- Low stock: same derivation as inventory (`quantity > 0` and `quantity <= reorder_level`).
+- Lab: dashboard 200 but no patient names, no upcoming table, no invoice/patient/appointment/inventory KPIs they cannot view.
+- Header already has a user chip; page still needs Overview + on-page greeting/chip.

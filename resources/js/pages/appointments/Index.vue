@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import AppointmentController from '@/actions/App/Http/Controllers/AppointmentController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import PatientPicker, { type PatientSearchResult } from '@/components/PatientPicker.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +42,7 @@ type AppointmentItem = {
     patient_id: number;
     fee_item_id: number | null;
     patient_name: string;
+    patient_label: string;
     fee_name: string | null;
     calendar_color: string;
     starts_at: string;
@@ -68,7 +70,6 @@ const props = defineProps<{
     workingHours: WorkingHours;
     columns: Column[];
     appointments: AppointmentItem[];
-    patients: Option[];
     dentists: Option[];
     chairs: Option[];
     feeItems: Option[];
@@ -79,6 +80,9 @@ const props = defineProps<{
 const showBookDialog = ref(false);
 const showEditDialog = ref(false);
 const editingAppointment = ref<AppointmentItem | null>(null);
+const bookPatientId = ref('');
+const editPatientId = ref('');
+const editSelectedPatient = ref<PatientSearchResult | null>(null);
 
 const selectedDate = ref(props.date);
 
@@ -175,12 +179,22 @@ function goToDate(): void {
 
 function openEditDialog(appointment: AppointmentItem): void {
     editingAppointment.value = appointment;
+    editPatientId.value = String(appointment.patient_id);
+    editSelectedPatient.value = {
+        id: appointment.patient_id,
+        label: appointment.patient_label,
+        patient_number: '',
+        full_name: appointment.patient_name,
+        phone: '',
+    };
     showEditDialog.value = true;
 }
 
 function closeEditDialog(): void {
     showEditDialog.value = false;
     editingAppointment.value = null;
+    editPatientId.value = '';
+    editSelectedPatient.value = null;
 }
 
 function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -416,27 +430,14 @@ defineOptions({
                 v-bind="AppointmentController.store.form()"
                 v-slot="{ errors, processing }"
                 class="space-y-4"
-                @success="showBookDialog = false"
+                @success="showBookDialog = false; bookPatientId = ''"
             >
-                <div class="grid gap-2">
-                    <Label for="patient_id">Patient</Label>
-                    <select
-                        id="patient_id"
-                        name="patient_id"
-                        required
-                        class="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs"
-                    >
-                        <option value="" disabled selected>Select patient</option>
-                        <option
-                            v-for="patient in patients"
-                            :key="patient.id"
-                            :value="patient.id"
-                        >
-                            {{ patient.label }}
-                        </option>
-                    </select>
-                    <InputError :message="errors.patient_id" />
-                </div>
+                <PatientPicker
+                    id="patient_id"
+                    v-model="bookPatientId"
+                    required
+                    :error="errors.patient_id"
+                />
 
                 <div class="grid gap-2">
                     <Label for="dentist_id">Dentist</Label>
@@ -570,25 +571,13 @@ defineOptions({
                 class="space-y-4"
                 @success="closeEditDialog()"
             >
-                <div class="grid gap-2">
-                    <Label for="edit_patient_id">Patient</Label>
-                    <select
-                        id="edit_patient_id"
-                        name="patient_id"
-                        required
-                        class="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs"
-                    >
-                        <option
-                            v-for="patient in patients"
-                            :key="patient.id"
-                            :value="patient.id"
-                            :selected="patient.id === editingAppointment.patient_id"
-                        >
-                            {{ patient.label }}
-                        </option>
-                    </select>
-                    <InputError :message="errors.patient_id" />
-                </div>
+                <PatientPicker
+                    id="edit_patient_id"
+                    v-model="editPatientId"
+                    :selected="editSelectedPatient"
+                    required
+                    :error="errors.patient_id"
+                />
 
                 <div class="grid gap-2">
                     <Label for="edit_dentist_id">Dentist</Label>

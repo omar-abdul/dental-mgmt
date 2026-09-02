@@ -2,6 +2,30 @@
 
 Completed architecture goals (G0–G15) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
 
+## 2026-09-03 — G7 Dashboard
+
+Replaced the Overview placeholder with live KPIs (today’s appointments, active patients, unpaid/issued invoices, low-stock items), Mon–Sun weekly visits, a recent activity feed, and today’s upcoming table. Counts use clinic timezone. Lab sees a limited dashboard; Accountant sees unpaid invoices without clinical lists; Nurse does not see the unpaid-invoice card.
+
+- **Verified:** `./vendor/bin/sail artisan test --compact` — 198 passed. Pest HTTP as browser-path substitute (factory counts match Inertia props; vacated/inactive/paid/out-of-stock excluded; Lab/Accountant/Nurse scoping).
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G8 (reports)
+
+## 2026-09-03 — Searchable patient picker (UX)
+
+Replaced the patient `<select>` on appointment book/edit and treatment create with a typeahead (`PatientPicker`) that searches by name, patient number, phone, and email. Archived patients are omitted. Dentist/chair/fee catalogs stay as dropdowns.
+
+- **Verified:** `./vendor/bin/sail artisan test --compact` — 190 passed. Pest HTTP as browser-path substitute (`patients.search` 200/403/empty/archived).
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G7 (dashboard) — **done 2026-09-03**
+
+## 2026-09-03 — G5 Billing and payments
+
+Replaced the billing placeholder with invoices generated from completed treatments, integer-cent totals, partial/overpay rules, recorded ZAAD/Sahal/eDahab/MyCash (no live APIs), printable receipts, and Admin/Accountant refunds. Dentist views, cannot generate or pay. Lab 403. Invoices are never hard-deleted.
+
+- **Verified:** `./vendor/bin/sail artisan test --compact` — 183 passed (`BillingTest` 24 + G0–G4/G6 suite). Pest HTTP as browser-path substitute. R1 Critical + R2 High + R3–R5 Medium fixed; R6 deferred (B16).
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G7 (dashboard)
+
 ## 2026-09-03 — G4 Treatments and prescriptions
 
 Replaced the treatments placeholder so Dentist/Admin can record diagnosis, fee-item procedures, and a prescription (prescriber is the logged-in user). Completing a treatment may set the linked appointment to `completed`. Patient show lists history. Nurse views, cannot POST Rx. Receptionist is view-only. Critical allergy flags appear on the treatment form.

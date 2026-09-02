@@ -5,48 +5,58 @@
 
 ## Task list
 
-### T1 — Treatments index/show, policy, patient history
+### T1 — Dashboard read model
 
 | Field | Value |
 |-------|-------|
 | **id** | T1 |
 | **status** | completed |
 | **depends_on** | — |
-| **Done when** | `treatments.index` is a real list (not PlaceholderModuleController); Dentist/Admin/Nurse/Receptionist GET 200; Accountant and Lab GET 403; guests redirect to login; patient show lists diagnosis, status, date (not only `Treatment #id`); Wayfinder Vue imports work |
+| **Done when** | Authenticated GET `dashboard` Inertia props include role-allowed KPIs and lists computed in clinic TZ; guests still redirect to login; Lab/Accountant omit modules they cannot view (`ClinicRole::canViewModule`); unauthorized KPI keys are `null` (not `0`) |
 
-**Description:** Replace placeholder treatments route. `TreatmentPolicy` view = Admin, Dentist, Receptionist, Nurse; write = Admin, Dentist. `Gate::authorize`. Expand `PatientController` show treatment payload. Keep `PlaceholderModuleTest` receptionist treatments GET 200.
+**Description:** Extend `DashboardController` (extract a small query class only if the controller would mix many unrelated queries poorly). Definitions:
 
-**Evidence:** `TreatmentController@index`; patient show diagnosis/status/date; Accountant/Lab GET 403. Verifier: no Critical residue. Orchestrator Sail gate: 159 passed.
+- **Today’s appointments:** `starts_at` in today `[00:00, next 00:00)` clinic TZ; exclude vacated statuses.
+- **Active patients:** `status = active`, not soft-deleted.
+- **Unpaid/issued invoices:** status in `issued`, `partially_paid`, `overdue`.
+- **Low-stock items:** same as inventory index (`quantity > 0 && quantity <= reorder_level`).
+- **Weekly visits:** Mon–Sun of the current week in clinic TZ; per-day counts using the same appointment inclusion as today’s KPI; keys `mon`…`sun`.
+- **Recent activity:** latest ~10 `activity_logs`, newest first, eager-load `user`; empty list OK.
+- **Upcoming today:** remaining today (`starts_at >= now`, same calendar day, not vacated), order by `starts_at`, limit ~12; eager-load patient + dentist. Omit entirely when the role cannot view appointments.
+
+Use `Gate` only if a policy exists; all six roles may hit `/dashboard`. Do not N+1. Money stays integer cents if shown. No new routes.
+
+**Evidence:** `DashboardMetrics::forUser()` + `DashboardController`. Null KPIs when `canViewModule` is false. Orchestrator Sail gate: 198 passed.
 
 ---
 
-### T2 — Record diagnosis, procedures, Rx; complete appointment
+### T2 — Dashboard Vue surface
 
 | Field | Value |
 |-------|-------|
 | **id** | T2 |
 | **status** | completed |
 | **depends_on** | T1 |
-| **Done when** | Dentist/Admin can create a treatment with diagnosis, ≥1 procedure (fee_item), and prescription items; `prescriber_id` is the acting user; `fee_cents` stored as integer from catalog × quantity (not client-trusted money); completing a treatment linked to an appointment sets that appointment `completed`; Nurse POST Rx 403; Receptionist POST/PUT 403; critical allergy flags appear on the treatment form |
+| **Done when** | `Dashboard.vue` shows Overview heading, on-page user name/role chip, up to four KPI cards (hide null KPIs), Mon–Sun weekly visits (CSS bars, no chart package), recent activity list with empty state, and today’s upcoming table with empty state |
 
-**Description:** Form requests + transaction. Optional `appointment_id` unique. Prescription number `RX-{YYYY}-{#####}` with advisory lock or `lockForUpdate` + retry like G3. Do not create invoices. Surface patient `allergies`/`conditions`/`medications` where `is_critical` on the create/edit form.
+**Description:** Match inventory Card / table patterns (`resources/js/pages/inventory/Index.vue`). Single Vue root. Typed props. Links to appointments/patients/billing/inventory are optional and must respect allowed modules. Do not add npm packages.
 
-**Evidence:** store + complete; prescriber = user; fee_cents from catalog; Nurse/Receptionist POST 403; critical flags on create. R1–R3 remediations verified.
+**Evidence:** `resources/js/pages/Dashboard.vue` — cards, CSS bars, activity, upcoming; null sections hidden.
 
 ---
 
-### T3 — Pest coverage for G4
+### T3 — Pest coverage
 
 | Field | Value |
 |-------|-------|
 | **id** | T3 |
 | **status** | completed |
 | **depends_on** | T2 |
-| **Done when** | Feature tests cover create treatment+rx (prescriber = user), patient show history, complete-treatment sets appointment completed, Nurse POST Rx 403, Receptionist mutate 403, Accountant GET 403; `./vendor/bin/sail artisan test --compact` green |
+| **Done when** | `DashboardTest` (or sibling) asserts factory counts match Inertia KPI/list props; vacated/inactive/paid/out-of-stock rows are excluded; Lab omits PHI/finance KPIs; existing guest redirect + six-role 200 tests still pass; `./vendor/bin/sail artisan test --compact` green |
 
-**Description:** `tests/Feature/TreatmentTest.php` using `test()`, factories, named assertions. Do not load G9 demo seed.
+**Description:** `test()` + factories. `travelTo` a fixed `Africa/Mogadishu` instant. Assert known counts, do not reimplement controller math. Cover: today’s count ignores cancelled; weekly bucket is the correct weekday; upcoming excludes past-today and cancelled; activity newest first. Accountant sees unpaid KPI and not appointment KPIs. Nurse sees appointment/patient/stock KPIs and not unpaid invoices.
 
-**Evidence:** `tests/Feature/TreatmentTest.php` (21 cases). Orchestrator: `./vendor/bin/sail artisan test --compact` **159 passed** (661 assertions). Pest HTTP as browser-path substitute.
+**Evidence:** `tests/Feature/DashboardTest.php` (16 tests). Orchestrator: `./vendor/bin/sail artisan test --compact` **198 passed** (953 assertions).
 
 ---
 

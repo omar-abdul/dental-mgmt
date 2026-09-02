@@ -448,3 +448,85 @@ test('index search finds archived patients by patient number', function () {
             ->where('patients.data.0.id', $archived->id)
             ->where('patients.data.0.is_archived', true));
 });
+
+test('patient search matches name patient number phone and email', function () {
+    $receptionist = User::factory()->receptionist()->create();
+
+    $patient = Patient::factory()->create([
+        'first_name' => 'Searchable',
+        'last_name' => 'Target',
+        'patient_number' => 'PAT-2026-99999',
+        'phone' => '+252619998877',
+        'email' => 'searchable@example.com',
+    ]);
+
+    $this->actingAs($receptionist)
+        ->getJson(route('patients.search', ['q' => 'Searchable']))
+        ->assertOk()
+        ->assertJsonCount(1, 'patients')
+        ->assertJsonPath('patients.0.id', $patient->id);
+
+    $this->actingAs($receptionist)
+        ->getJson(route('patients.search', ['q' => 'PAT-2026-99999']))
+        ->assertOk()
+        ->assertJsonCount(1, 'patients');
+
+    $this->actingAs($receptionist)
+        ->getJson(route('patients.search', ['q' => '+252619998877']))
+        ->assertOk()
+        ->assertJsonCount(1, 'patients');
+
+    $this->actingAs($receptionist)
+        ->getJson(route('patients.search', ['q' => 'searchable@example.com']))
+        ->assertOk()
+        ->assertJsonCount(1, 'patients');
+});
+
+test('patient search returns empty for blank query', function () {
+    $receptionist = User::factory()->receptionist()->create();
+
+    Patient::factory()->create(['first_name' => 'Visible']);
+
+    $this->actingAs($receptionist)
+        ->getJson(route('patients.search', ['q' => '']))
+        ->assertOk()
+        ->assertExactJson(['patients' => []]);
+});
+
+test('patient search omits archived patients', function () {
+    $receptionist = User::factory()->receptionist()->create();
+
+    $active = Patient::factory()->create([
+        'first_name' => 'Active',
+        'last_name' => 'Picker',
+        'patient_number' => 'PAT-2026-55555',
+    ]);
+
+    Patient::factory()->archived()->create([
+        'first_name' => 'Active',
+        'last_name' => 'Archived',
+        'patient_number' => 'PAT-2026-55556',
+    ]);
+
+    $this->actingAs($receptionist)
+        ->getJson(route('patients.search', ['q' => 'Active']))
+        ->assertOk()
+        ->assertJsonCount(1, 'patients')
+        ->assertJsonPath('patients.0.id', $active->id);
+});
+
+test('accountant and lab cannot search patients', function (ClinicRole $role) {
+    $user = User::factory()->role($role)->create();
+
+    $this->actingAs($user)
+        ->getJson(route('patients.search', ['q' => 'Maria']))
+        ->assertForbidden();
+})->with([
+    'accountant' => ClinicRole::Accountant,
+    'lab' => ClinicRole::Lab,
+]);
+
+test('guest is redirected to login when searching patients', function () {
+    $this->get(route('patients.search', ['q' => 'Maria']))
+        ->assertRedirectToRoute('login');
+});
