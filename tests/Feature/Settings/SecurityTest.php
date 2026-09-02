@@ -3,61 +3,15 @@
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
-use Laravel\Fortify\Features;
 
-test('security page is displayed', function () {
-    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
-    $user = User::factory()->create();
-
-    $this->actingAs($user)
-        ->withSession(['auth.password_confirmed_at' => time()])
-        ->get(route('security.edit'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/Security')
-            ->where('canManageTwoFactor', true)
-            ->where('twoFactorEnabled', false),
-        );
-});
-
-test('security page requires password confirmation when enabled', function () {
-    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-
-    $user = User::factory()->create();
-
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
-    $response = $this->actingAs($user)
-        ->get(route('security.edit'));
-
-    $response->assertRedirect(route('password.confirm'));
-});
-
-test('security page renders without two factor when feature is disabled', function () {
-    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-
-    config(['fortify.features' => []]);
-
+test('security page is displayed for authenticated users', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
         ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('security.edit'))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/Security')
-            ->where('canManageTwoFactor', false)
-            ->missing('twoFactorEnabled')
-            ->missing('requiresConfirmation'),
-        );
+        ->assertInertia(fn (Assert $page) => $page->component('settings/Security'));
 });
 
 test('password can be updated', function () {
@@ -67,16 +21,33 @@ test('password can be updated', function () {
         ->actingAs($user)
         ->from(route('security.edit'))
         ->put(route('user-password.update'), [
-            'current_password' => 'password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'current_password' => 'password12',
+            'password' => 'new-password12',
+            'password_confirmation' => 'new-password12',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
         ->assertRedirect(route('security.edit'));
 
-    expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
+    expect(Hash::check('new-password12', $user->refresh()->password))->toBeTrue();
+});
+
+test('password shorter than ten characters is rejected', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->from(route('security.edit'))
+        ->put(route('user-password.update'), [
+            'current_password' => 'password12',
+            'password' => 'short9ch',
+            'password_confirmation' => 'short9ch',
+        ]);
+
+    $response
+        ->assertSessionHasErrors('password')
+        ->assertRedirect(route('security.edit'));
 });
 
 test('correct password must be provided to update password', function () {
@@ -87,8 +58,8 @@ test('correct password must be provided to update password', function () {
         ->from(route('security.edit'))
         ->put(route('user-password.update'), [
             'current_password' => 'wrong-password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'new-password12',
+            'password_confirmation' => 'new-password12',
         ]);
 
     $response

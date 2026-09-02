@@ -1,31 +1,30 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, usePage } from '@inertiajs/vue3';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
-import TeamInvitationAlert from '@/components/TeamInvitationAlert.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import type { TeamInvitationContext } from '@/types';
 
 defineOptions({
     layout: {
-        title: 'Log in to your account',
-        description: 'Enter your email and password below to log in',
+        title: 'Welcome Back',
+        description: 'Sign in to your staff account',
     },
 });
 
 defineProps<{
     status?: string;
     canResetPassword: boolean;
-    teamInvitation?: TeamInvitationContext | null;
 }>();
+
+const page = usePage();
+const currentYear = new Date().getFullYear();
 </script>
 
 <template>
@@ -38,12 +37,6 @@ defineProps<{
         {{ status }}
     </div>
 
-    <TeamInvitationAlert
-        v-if="teamInvitation"
-        :invitation="teamInvitation"
-        action="Log in"
-    />
-
     <Form
         v-bind="store.form()"
         :reset-on-success="['password']"
@@ -52,7 +45,7 @@ defineProps<{
     >
         <div class="grid gap-6">
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email">Username or Email</Label>
                 <Input
                     id="email"
                     type="email"
@@ -61,7 +54,7 @@ defineProps<{
                     autofocus
                     :tabindex="1"
                     autocomplete="email"
-                    placeholder="email@example.com"
+                    placeholder="email@goldensmile.clinic"
                 />
                 <InputError :message="errors.email" />
             </div>
@@ -90,7 +83,7 @@ defineProps<{
             </div>
 
             <div class="flex items-center justify-between">
-                <Label for="remember" class="flex items-center space-x-3">
+                <Label for="remember" class="flex items-center gap-3">
                     <Checkbox id="remember" name="remember" :tabindex="3" />
                     <span>Remember me</span>
                 </Label>
@@ -98,7 +91,7 @@ defineProps<{
 
             <Button
                 type="submit"
-                class="mt-4 w-full"
+                class="mt-2 w-full uppercase tracking-wide"
                 :tabindex="4"
                 :disabled="processing"
                 data-test="login-button"
@@ -107,22 +100,10 @@ defineProps<{
                 Log in
             </Button>
         </div>
-
-        <div class="text-muted-foreground text-center text-sm">
-            Don't have an account?
-            <TextLink
-                :href="
-                    register({
-                        query: {
-                            invitation: teamInvitation?.code,
-                        },
-                    })
-                "
-                :tabindex="5"
-                data-test="register-link"
-            >
-                Sign up
-            </TextLink>
-        </div>
     </Form>
+
+    <footer class="text-muted-foreground space-y-2 text-center text-xs">
+        <p>Admin · Dentist · Receptionist · Nurse · Accountant · Lab</p>
+        <p>© {{ currentYear }} {{ page.props.name }}</p>
+    </footer>
 </template>

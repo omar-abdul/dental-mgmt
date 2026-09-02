@@ -1,38 +1,26 @@
 <?php
 
-use App\Enums\TeamRole;
-use App\Models\Team;
-use App\Models\TeamInvitation;
+use App\Enums\ClinicRole;
 use App\Models\User;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Testing\AssertableInertia as Assert;
-use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
     $response->assertOk();
-});
-
-test('login screen includes team invitation context', function () {
-    $owner = User::factory()->create();
-    $team = Team::factory()->create(['name' => 'Laravel Team']);
-    $team->members()->attach($owner, ['role' => TeamRole::Owner->value]);
-
-    $invitation = TeamInvitation::factory()->create([
-        'team_id' => $team->id,
-        'email' => 'invited@example.com',
-        'invited_by' => $owner->id,
-    ]);
-
-    $response = $this->get(route('login', ['invitation' => $invitation->code]));
-
-    $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('auth/Login')
-        ->where('teamInvitation.code', $invitation->code)
-        ->where('teamInvitation.teamName', 'Laravel Team'),
+        ->missing('teamInvitation')
     );
+});
+
+test('login screen does not include registration link', function () {
+    $response = $this->get(route('login'));
+
+    $response->assertOk();
+    $response->assertDontSee('Sign up', false);
+    $response->assertDontSee('register-link', false);
 });
 
 test('users can authenticate using the login screen', function () {
@@ -40,33 +28,43 @@ test('users can authenticate using the login screen', function () {
 
     $response = $this->post(route('login.store'), [
         'email' => $user->email,
-        'password' => 'password',
+        'password' => 'password12',
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirectToRoute('dashboard');
 });
 
-test('users with two factor enabled are redirected to two factor challenge', function () {
-    if (! Features::canManageTwoFactorAuthentication()) {
-        $this->markTestSkipped('Two-factor authentication is not enabled.');
-    }
+test('each clinic role can authenticate via login screen', function (ClinicRole $role) {
+    $user = User::factory()->role($role)->create();
 
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
-    $user = User::factory()->withTwoFactor()->create();
-
-    $response = $this->post(route('login'), [
+    $response = $this->post(route('login.store'), [
         'email' => $user->email,
-        'password' => 'password',
+        'password' => 'password12',
     ]);
 
-    $response->assertRedirect(route('two-factor.login'));
-    $response->assertSessionHas('login.id', $user->id);
-    $this->assertGuest();
+    $this->assertAuthenticated();
+    $response->assertRedirectToRoute('dashboard');
+})->with([
+    'admin' => ClinicRole::Admin,
+    'dentist' => ClinicRole::Dentist,
+    'receptionist' => ClinicRole::Receptionist,
+    'nurse' => ClinicRole::Nurse,
+    'accountant' => ClinicRole::Accountant,
+    'lab' => ClinicRole::Lab,
+]);
+
+test('users can authenticate with remember me', function () {
+    $user = User::factory()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password12',
+        'remember' => true,
+    ]);
+
+    $response->assertRedirectToRoute('dashboard');
+    $this->assertAuthenticated();
 });
 
 test('users can not authenticate with invalid password', function () {

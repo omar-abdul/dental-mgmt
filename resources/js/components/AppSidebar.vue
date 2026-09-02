@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from '@lucide/vue';
+import {
+    CalendarDays,
+    LayoutGrid,
+    Package,
+    Receipt,
+    Settings,
+    Stethoscope,
+    Users,
+    BarChart3,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
-import TeamSwitcher from '@/components/TeamSwitcher.vue';
 import {
     Sidebar,
     SidebarContent,
@@ -17,34 +24,58 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as appointmentsIndex } from '@/routes/appointments';
+import { index as billingIndex } from '@/routes/billing';
+import { index as inventoryIndex } from '@/routes/inventory';
+import { index as patientsIndex } from '@/routes/patients';
+import { index as reportsIndex } from '@/routes/reports';
+import { edit as settingsIndex } from '@/routes/profile';
+import { index as treatmentsIndex } from '@/routes/treatments';
 import type { NavItem } from '@/types';
 
 const page = usePage();
 
-const dashboardUrl = computed(() =>
-    page.props.currentTeam ? dashboard(page.props.currentTeam.slug).url : '/',
+const allowedModules = computed(
+    () => page.props.auth.user?.allowed_modules ?? [],
 );
 
-const mainNavItems = computed<NavItem[]>(() => [
+const allNavItems: NavItem[] = [
+    { title: 'Dashboard', href: dashboard(), icon: LayoutGrid, module: 'dashboard' },
+    { title: 'Patients', href: patientsIndex(), icon: Users, module: 'patients' },
     {
-        title: 'Dashboard',
-        href: dashboardUrl.value,
-        icon: LayoutGrid,
-    },
-]);
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
+        title: 'Appointments',
+        href: appointmentsIndex(),
+        icon: CalendarDays,
+        module: 'appointments',
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
+        title: 'Treatments',
+        href: treatmentsIndex(),
+        icon: Stethoscope,
+        module: 'treatments',
+    },
+    { title: 'Billing', href: billingIndex(), icon: Receipt, module: 'billing' },
+    {
+        title: 'Inventory',
+        href: inventoryIndex(),
+        icon: Package,
+        module: 'inventory',
+    },
+    { title: 'Reports', href: reportsIndex(), icon: BarChart3, module: 'reports' },
+    {
+        title: 'Settings',
+        href: settingsIndex(),
+        icon: Settings,
+        module: 'settings',
     },
 ];
+
+const mainNavItems = computed(() =>
+    allNavItems.filter(
+        (item) =>
+            item.module && allowedModules.value.includes(item.module as string),
+    ),
+);
 </script>
 
 <template>
@@ -53,15 +84,10 @@ const footerNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboardUrl">
+                        <Link :href="dashboard()">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <TeamSwitcher />
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarHeader>
@@ -71,7 +97,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>

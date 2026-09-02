@@ -1,58 +1,69 @@
 # Golden Smile — Architecture
 
-Single-clinic staff app: Golden Smile Dental Clinic (UI) running a DCMS-shaped domain (JSON contract). Staff authenticate, then run patients, appointments, clinical work, billing, inventory, and reports from a Vue/Inertia dashboard.
+Single-clinic staff app: Golden Smile Dental Clinic (UI) running a DCMS-shaped
+domain (JSON contract). Staff authenticate, then run patients, appointments,
+clinical work, billing, inventory, and reports from a Vue/Inertia dashboard.
 
-This file is the source of truth for **what to build** and **when it is done**. Implementation happens only via goal-workflow G-ids. Do not start G(n+1) until G(n) is completed (or skipped/cancelled with user ack) and Critical findings are closed.
+This file is the source of truth for **what to build** and **when it is done**.
+Implementation happens only via goal-workflow G-ids. Do not start G(n+1) until
+G(n) is completed (or skipped/cancelled with user ack) and Critical findings are
+closed.
 
-| Source | Wins for |
-|--------|----------|
-| [`database/data/dcms.json`](database/data/dcms.json) | Domain: entities, statuses, roles, fees, working hours, business rules, ID formats, mobile money |
-| Thesis §4.5–4.8 + screenshots | UX of login, dashboard, patient form, day calendar, inventory (and inferred billing) |
-| [`database/data/golden-smile.example.json`](database/data/golden-smile.example.json) | Named demo people/SKUs/KPI generate rules, **reshaped to DCMS fields** |
+| Source                                                                               | Wins for                                                                                         |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `[database/data/dcms.json](database/data/dcms.json)`                                 | Domain: entities, statuses, roles, fees, working hours, business rules, ID formats, mobile money |
+| Thesis §4.5–4.8 + screenshots                                                        | UX of login, dashboard, patient form, day calendar, inventory (and inferred billing)             |
+| `[database/data/golden-smile.example.json](database/data/golden-smile.example.json)` | Named demo people/SKUs/KPI generate rules, **reshaped to DCMS fields**                           |
 
 ---
 
 ## 1. Product
 
-**Brand:** Golden Smile Dental Clinic (screenshots). `settings.clinic.name` is editable later; default brand string is Golden Smile.
-**Ops locale:** `Africa/Mogadishu`, currency **USD**, languages English (UI in G0–G15). Somali/Arabic copy is out of Wave 1–2.
-**Users:** clinic staff only. Patients do not log in. No patient portal in G0–G15.
-**Roles:** Admin, Dentist, Receptionist, Dental Nurse, Accountant, Laboratory Staff (DCMS `roles`).
-**Not multi-tenant.** One clinic, one database. JSON `branches` stay unused.
+**Brand:** Golden Smile Dental Clinic (screenshots). `settings.clinic.name` is
+editable later; default brand string is Golden Smile. **Ops locale:**
+`Africa/Mogadishu`, currency **USD**, languages English (UI in G0–G15).
+Somali/Arabic copy is out of Wave 1–2. **Users:** clinic staff only. Patients do
+not log in. No patient portal in G0–G15. **Roles:** Admin, Dentist,
+Receptionist, Dental Nurse, Accountant, Laboratory Staff (DCMS `roles`). **Not
+multi-tenant.** One clinic, one database. JSON `branches` stay unused.
 
 ### Waves
 
-| Wave | Goals | Meaning |
-|------|-------|---------|
-| **1 — Operable clinic** | G0–G9 | Screenshot modules + DCMS core rules (chairs, fees, USD, mobile-money *recording*, 6 roles) |
-| **2 — DCMS depth** | G10–G15 | Odontogram/sign-off, lab, batches/POs, expenses/cash close/insurance/payment plans, notification templates, imaging orders |
+| Wave                    | Goals   | Meaning                                                                                                                    |
+| ----------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **1 — Operable clinic** | G0–G9   | Screenshot modules + DCMS core rules (chairs, fees, USD, mobile-money _recording_, 6 roles)                                |
+| **2 — DCMS depth**      | G10–G15 | Odontogram/sign-off, lab, batches/POs, expenses/cash close/insurance/payment plans, notification templates, imaging orders |
 
-JSON `required_workflows` that need a provider (live SMS, ZAAD API, WhatsApp) are **recorded in-app** in Wave 1–2; they do not call external APIs until a later approved goal.
+JSON `required_workflows` that need a provider (live SMS, ZAAD API, WhatsApp)
+are **recorded in-app** in Wave 1–2; they do not call external APIs until a
+later approved goal.
 
 ---
 
 ## 2. Stack and constraints
 
-Already in the repo (Laravel Vue starter kit). **Do not add Composer/npm dependencies** without user approval.
+Already in the repo (Laravel Vue starter kit). **Do not add Composer/npm
+dependencies** without user approval.
 
-| Layer | Choice |
-|-------|--------|
-| PHP | 8.3+ (project targets 8.5) |
-| Laravel | 13 |
-| Auth | Fortify session; staff-only |
-| Front | Inertia v3 + Vue 3 + Tailwind 4 + existing `components/ui` |
-| Routes | Wayfinder (`@/actions`, `@/routes`) |
-| Tests | Pest feature tests; factories over tinker |
-| Money | Integer **USD cents** (`$1.00 = 100`). Never float. JSON decimals map 20 → `2000` |
-| Time | `Africa/Mogadishu`. Store timezone-aware datetimes. |
-| Dates | `YYYY-MM-DD` in APIs/DB; UI may format for display |
-| DB | MySQL-compatible. Local/tests may use SQLite. |
-| HTTP | **Inertia pages**, not `/api/v1`. JSON `api_contract` is deferred (see §11). |
-| IDs | DCMS formats: `PAT-{YYYY}-{#####}`, `APT-…`, `INV-…`, `RCT-…`, `PAY-…`, `RX-…`, `LAB-…`, `PO-…` |
+| Layer   | Choice                                                                                          |
+| ------- | ----------------------------------------------------------------------------------------------- |
+| PHP     | 8.3+ (project targets 8.5)                                                                      |
+| Laravel | 13                                                                                              |
+| Auth    | Fortify session; staff-only                                                                     |
+| Front   | Inertia v3 + Vue 3 + Tailwind 4 + existing `components/ui`                                      |
+| Routes  | Wayfinder (`@/actions`, `@/routes`)                                                             |
+| Tests   | Pest feature tests; factories over tinker                                                       |
+| Money   | Integer **USD cents** (`$1.00 = 100`). Never float. JSON decimals map 20 → `2000`               |
+| Time    | `Africa/Mogadishu`. Store timezone-aware datetimes.                                             |
+| Dates   | `YYYY-MM-DD` in APIs/DB; UI may format for display                                              |
+| DB      | MySQL-compatible. Local/tests may use SQLite.                                                   |
+| HTTP    | **Inertia pages**, not `/api/v1`. JSON `api_contract` is deferred (see §11).                    |
+| IDs     | DCMS formats: `PAT-{YYYY}-{#####}`, `APT-…`, `INV-…`, `RCT-…`, `PAY-…`, `RX-…`, `LAB-…`, `PO-…` |
 
 **Pages** live in `resources/js/pages`.
 
-**Password:** minimum length **10** (`settings.privacy.minimum_password_length`). Demo password is `password12`.
+**Password:** minimum length **10**
+(`settings.privacy.minimum_password_length`). Demo password is `password12`.
 **Idle:** 30-minute session lifetime matching `automatic_logout_minutes` (G0).
 
 ---
@@ -68,7 +79,8 @@ Already in the repo (Laravel Vue starter kit). **Do not add Composer/npm depende
 - `APP_NAME=Laravel`; SQLite default
 - Architecture + DCMS JSON + screenshot demo JSON exist; **no G-id implemented**
 
-**Next:** G0 (clinic foundation). Do not implement domain modules against the team URL prefix.
+**Next:** G0 (clinic foundation). Do not implement domain modules against the
+team URL prefix.
 
 ---
 
@@ -78,68 +90,94 @@ Settled. Implementers follow these; do not re-litigate inside a G-id.
 
 ### D1 — Single clinic, retire starter-kit teams
 
-Drop `{current_team}`, team switcher, invitations, team Fortify redirects. Keep Fortify session, profile, password change. Delete or rewrite `tests/Feature/Teams/*` in G0.
+Drop `{current_team}`, team switcher, invitations, team Fortify redirects. Keep
+Fortify session, profile, password change. Delete or rewrite
+`tests/Feature/Teams/*` in G0.
 
 ### D2 — Six clinic roles on `users`
 
-`App\Enums\ClinicRole`: `Admin`, `Dentist`, `Receptionist`, `Nurse`, `Accountant`, `Lab`.
+`App\Enums\ClinicRole`: `Admin`, `Dentist`, `Receptionist`, `Nurse`,
+`Accountant`, `Lab`.
 
-Policies + role helpers. No Spatie. Admin who practices: `role = Admin` plus a `dentists.user_id` row (screenshot: Dr. A. Santos).
+Policies + role helpers. No Spatie. Admin who practices: `role = Admin` plus a
+`dentists.user_id` row (screenshot: Dr. A. Santos).
 
 JSON permission slugs map to policies (see §6). Admin is `*`.
 
 ### D3 — Staff-only accounts
 
-Disable Fortify registration and email verification as product features. Admin (or seeder) creates staff. Login identifier is **email**. Label may say “Username or Email”.
+Disable Fortify registration and email verification as product features. Admin
+(or seeder) creates staff. Login identifier is **email**. Label may say
+“Username or Email”.
 
 ### D4 — Rooms contain chairs; bookings conflict on dentist **or** chair
 
-`rooms` 1—* `chairs`. Appointments require `dentist_id` + `chair_id` (+ `starts_at`/`ends_at`). Overlap: same dentist **or** same chair, excluding `cancelled` / `no_show` / `rescheduled` vacated slots.
+`rooms` 1—* `chairs`. Appointments require `dentist_id` + `chair_id` (+
+`starts_at`/`ends_at`). Overlap: same dentist **or** same chair, excluding
+`cancelled` / `no_show` / `rescheduled` vacated slots.
 
-Calendar columns may still read `Dr. A. Santos — Room 1` (chair’s room), matching the screenshot.
+Calendar columns may still read `Dr. A. Santos — Room 1` (chair’s room),
+matching the screenshot.
 
 ### D5 — Fee catalog is the procedure/price source
 
-`fee_items` from DCMS (`CONSULT`, `EXAM`, `CLEAN`, `FILL`, `RCT`, `EXT`, `CROWN`, `IMPLANT`, `XRAY`). Appointments and invoice lines reference `fee_item_id`. Calendar color is a column on `fee_items` (not in JSON; we add it for the screenshot cards).
+`fee_items` from DCMS (`CONSULT`, `EXAM`, `CLEAN`, `FILL`, `RCT`, `EXT`,
+`CROWN`, `IMPLANT`, `XRAY`). Appointments and invoice lines reference
+`fee_item_id`. Calendar color is a column on `fee_items` (not in JSON; we add it
+for the screenshot cards).
 
 ### D6 — Reports are queries
 
-No `reports` table of documents. `activity_logs` for dashboard; `audit_logs` / `data_access_logs` for privacy (G2+).
+No `reports` table of documents. `activity_logs` for dashboard; `audit_logs` /
+`data_access_logs` for privacy (G2+).
 
 ### D7 — Soft-delete / archive; money never physically deleted
 
-Patients: `status` active/inactive/archived + `softDeletes`. Archived = read-only. Appointments keep rows (`cancelled`, `rescheduled`). Invoices/payments: `cancelled`/`refunded`/`written_off`, never hard-deleted.
+Patients: `status` active/inactive/archived + `softDeletes`. Archived =
+read-only. Appointments keep rows (`cancelled`, `rescheduled`).
+Invoices/payments: `cancelled`/`refunded`/`written_off`, never hard-deleted.
 
 ### D8 — Two JSON files
 
-| File | Role |
-|------|------|
-| `database/data/dcms.json` | Contract: schema shape, fees, hours, rules, example Ahmed Ali / ZAAD payment |
-| `database/data/golden-smile.example.json` | G9 UI fixture: screenshot names, KPI generate, **DCMS field shapes** |
+| File                                      | Role                                                                         |
+| ----------------------------------------- | ---------------------------------------------------------------------------- |
+| `database/data/dcms.json`                 | Contract: schema shape, fees, hours, rules, example Ahmed Ali / ZAAD payment |
+| `database/data/golden-smile.example.json` | G9 UI fixture: screenshot names, KPI generate, **DCMS field shapes**         |
 
 ### D9 — Visual system
 
-Screenshots: navy sidebar, GS mark, teal accent, split login, status badges, calendar left color bar, CSS/SVG bars (no new chart library). Display money as `$`. Login footer lists all six roles.
+Screenshots: navy sidebar, GS mark, teal accent, split login, status badges,
+calendar left color bar, CSS/SVG bars (no new chart library). Display money as
+`$`. Login footer lists all six roles.
 
 ### D10 — Working hours from DCMS
 
-Sat–Wed 08:00–18:00; Thursday 08:00–13:00; **Friday closed**. Reject bookings outside hours. Screenshot 08:00–16:00 is **not** the rule.
+Sat–Wed 08:00–18:00; Thursday 08:00–13:00; **Friday closed**. Reject bookings
+outside hours. Screenshot 08:00–16:00 is **not** the rule.
 
 ### D11 — Integer cents vs JSON decimal
 
-JSON `data_quality.money_storage = decimal`. Laravel stores **integer cents**. Forms/UI show 2 decimal places. Totals must reconcile exactly (integer math).
+JSON `data_quality.money_storage = decimal`. Laravel stores **integer cents**.
+Forms/UI show 2 decimal places. Totals must reconcile exactly (integer math).
 
 ### D12 — Mobile money is recorded, not gateway-integrated (Wave 1)
 
-Methods: `cash`, `card`, `bank_transfer`, `zaad`, `sahal`, `edahab`, `mycash`, `insurance`. For ZAAD/Sahal/eDahab/MyCash: require payer phone, transaction_id, reference; unique `transaction_id`; `verification_status` (`verification_required` \| `verified` \| `failed`); completed ≠ “reference typed”. No provider API keys on payment rows. Live Telesom/Golis/Somtel APIs are out of G0–G15.
+Methods: `cash`, `card`, `bank_transfer`, `zaad`, `sahal`, `edahab`, `mycash`,
+`insurance`. For ZAAD/Sahal/eDahab/MyCash: require payer phone, transaction_id,
+reference; unique `transaction_id`; `verification_status`
+(`verification_required` `verified` `failed`); completed ≠ “reference typed”. No
+provider API keys on payment rows. Live Telesom/Golis/Somtel APIs are out of
+G0–G15.
 
 ### D13 — Inertia, not `/api/v1`
 
-JSON `api_contract` documents a future API. Wave 1–2 is the Inertia app. Do not add a parallel REST surface in these goals.
+JSON `api_contract` documents a future API. Wave 1–2 is the Inertia app. Do not
+add a parallel REST surface in these goals.
 
 ### D14 — Global row metadata
 
-New domain tables include `created_by`, `updated_by` (nullable FK users) plus timestamps. Soft delete where DCMS says so.
+New domain tables include `created_by`, `updated_by` (nullable FK users) plus
+timestamps. Soft delete where DCMS says so.
 
 ---
 
@@ -177,53 +215,96 @@ users 1──* audit_logs
 
 ### 5.2 Tables
 
-**users** — extend existing: `role` (`admin`\|`dentist`\|`receptionist`\|`nurse`\|`accountant`\|`lab`). Drop `current_team_id` in G0.
+**users** — extend existing: `role`
+(`admindentistreceptionistnurseaccountantlab`). Drop `current_team_id` in G0.
 
-**dentists** — `user_id` unique FK, `display_name`, `default_chair_id` nullable, `is_active`.
+**dentists** — `user_id` unique FK, `display_name`, `default_chair_id` nullable,
+`is_active`.
 
 **rooms** — `name`, `sort_order`, `is_active`.
 
-**chairs** — `room_id`, `name` (e.g. `Chair 1`), `code` unique (`CHAIR-001`), `is_active`.
+**chairs** — `room_id`, `name` (e.g. `Chair 1`), `code` unique (`CHAIR-001`),
+`is_active`.
 
-**working_hours** — `weekday` (0=Sunday… or ISO), `opens_at` time nullable, `closes_at` time nullable. Seed from DCMS (Friday both null).
+**working_hours** — `weekday` (0=Sunday… or ISO), `opens_at` time nullable,
+`closes_at` time nullable. Seed from DCMS (Friday both null).
 
-**patients** — `patient_number` unique (`P000001` or `PAT-2026-00001` — use DCMS `id_formats.patient` as public id; `patient_number` can equal that string), `first_name`, `last_name`, `date_of_birth`, `gender` (DCMS options), `phone` required, `email` nullable, `occupation` nullable, `address` nullable, `referred_by` nullable, `insurance_provider` nullable, `status` (active/inactive/archived), `softDeletes`, `created_by`. Display name = `first_name + last_name`.
+**patients** — `patient_number` unique (`P000001` or `PAT-2026-00001` — use DCMS
+`id_formats.patient` as public id; `patient_number` can equal that string),
+`first_name`, `last_name`, `date_of_birth`, `gender` (DCMS options), `phone`
+required, `email` nullable, `occupation` nullable, `address` nullable,
+`referred_by` nullable, `insurance_provider` nullable, `status`
+(active/inactive/archived), `softDeletes`, `created_by`. Display name =
+`first_name + last_name`.
 
 **emergency_contacts** — `patient_id`, `name`, `relationship` nullable, `phone`.
 
-**patient_allergies** / **patient_conditions** / **patient_medications** — `patient_id`, `label`, `is_critical` bool (alerts).
+**patient_allergies** / **patient_conditions** / **patient_medications** —
+`patient_id`, `label`, `is_critical` bool (alerts).
 
-**fee_items** — `code` unique, `name`, `category`, `unit`, `price_cents`, `tax_rate_bps` (0), `calendar_color`, `default_duration_minutes`, `is_active`. Seed FEE-001–009.
+**fee_items** — `code` unique, `name`, `category`, `unit`, `price_cents`,
+`tax_rate_bps` (0), `calendar_color`, `default_duration_minutes`, `is_active`.
+Seed FEE-001–009.
 
-**appointments** — public `number` (`APT-…`), `patient_id`, `dentist_id`, `chair_id`, `fee_item_id` nullable, `starts_at`, `ends_at`, `status` (DCMS settings list; treat `in_treatment` as alias of `in_progress` if it appears), `reason` nullable, `notes` nullable, `created_by`. Indexes `(dentist_id, starts_at)`, `(chair_id, starts_at)`. Reschedule updates times and sets status; keep previous times in `appointment_revisions` (simple: `cancelled_at`/`previous_starts_at` JSON or a small history table in G3).
+**appointments** — public `number` (`APT-…`), `patient_id`, `dentist_id`,
+`chair_id`, `fee_item_id` nullable, `starts_at`, `ends_at`, `status` (DCMS
+settings list; treat `in_treatment` as alias of `in_progress` if it appears),
+`reason` nullable, `notes` nullable, `created_by`. Indexes
+`(dentist_id, starts_at)`, `(chair_id, starts_at)`. Reschedule updates times and
+sets status; keep previous times in `appointment_revisions` (simple:
+`cancelled_at`/`previous_starts_at` JSON or a small history table in G3).
 
-**Overlap:** `starts_at < other.ends_at AND ends_at > other.starts_at` on same dentist or chair, inside a transaction with `lockForUpdate`.
+**Overlap:** `starts_at < other.ends_at AND ends_at > other.starts_at` on same
+dentist or chair, inside a transaction with `lockForUpdate`.
 
-**treatments** — `patient_id`, `dentist_id`, `appointment_id` nullable unique, `diagnosed_at`, `diagnosis` text, `status` (`planned`\|`in_progress`\|`completed`\|`cancelled`), `notes`.
+**treatments** — `patient_id`, `dentist_id`, `appointment_id` nullable unique,
+`diagnosed_at`, `diagnosis` text, `status`
+(`plannedin_progresscompletedcancelled`), `notes`.
 
-**treatment_procedures** — `treatment_id`, `fee_item_id`, `tooth_fdi` nullable, `quantity`, `fee_cents`.
+**treatment_procedures** — `treatment_id`, `fee_item_id`, `tooth_fdi` nullable,
+`quantity`, `fee_cents`.
 
-**prescriptions** — `number` (`RX-…`), `treatment_id`, `patient_id`, `prescriber_id` (users), `prescribed_at`.
+**prescriptions** — `number` (`RX-…`), `treatment_id`, `patient_id`,
+`prescriber_id` (users), `prescribed_at`.
 
-**prescription_items** — `prescription_id`, `medication`, `dosage`, `instructions`.
+**prescription_items** — `prescription_id`, `medication`, `dosage`,
+`instructions`.
 
-**invoices** — `invoice_number` unique, `patient_id`, `treatment_id` nullable, `issued_by`, `issued_at`, `status` (draft/issued/partially_paid/paid/overdue/cancelled/refunded), `subtotal_cents`, `discount_cents`, `tax_cents`, `total_cents`, `amount_paid_cents`, `balance_cents`. No overpay. Financial rows not hard-deleted.
+**invoices** — `invoice_number` unique, `patient_id`, `treatment_id` nullable,
+`issued_by`, `issued_at`, `status`
+(draft/issued/partially_paid/paid/overdue/cancelled/refunded), `subtotal_cents`,
+`discount_cents`, `tax_cents`, `total_cents`, `amount_paid_cents`,
+`balance_cents`. No overpay. Financial rows not hard-deleted.
 
-**invoice_items** — `fee_item_id` nullable, `description`, `quantity`, `unit_price_cents`, `discount_cents`, `tax_cents`, `line_total_cents`.
+**invoice_items** — `fee_item_id` nullable, `description`, `quantity`,
+`unit_price_cents`, `discount_cents`, `tax_cents`, `line_total_cents`.
 
-**payments** — `payment_number` unique, `invoice_id`, `patient_id`, `amount_cents`, `method` (cash|card|bank_transfer|zaad|sahal|edahab|mycash|insurance), `status` (pending|completed|failed|cancelled|refunded|…), `paid_at`, `received_by`, `reference_number` nullable. Card/bank/mobile require reference.
+**payments** — `payment_number` unique, `invoice_id`, `patient_id`,
+`amount_cents`, `method`
+(cash|card|bank_transfer|zaad|sahal|edahab|mycash|insurance), `status`
+(pending|completed|failed|cancelled|refunded|…), `paid_at`, `received_by`,
+`reference_number` nullable. Card/bank/mobile require reference.
 
-**mobile_money_transactions** — 1:1 with mobile-money payments: `provider` (Telesom/Golis/Somtel/Somlink), `payer_phone`, `transaction_id` unique, `reference_number`, `verification_status`, `verified_by`, `verified_at`. Never store API keys.
+**mobile_money_transactions** — 1:1 with mobile-money payments: `provider`
+(Telesom/Golis/Somtel/Somlink), `payer_phone`, `transaction_id` unique,
+`reference_number`, `verification_status`, `verified_by`, `verified_at`. Never
+store API keys.
 
-**receipts** — `receipt_number` unique (`RCT-…`), `payment_id` unique, printable view.
+**receipts** — `receipt_number` unique (`RCT-…`), `payment_id` unique, printable
+view.
 
-**inventory_items** — `name`, `category` (Dental Materials, Medicines, Instruments, PPE, Consumables, Office Supplies), `quantity`, `unit`, `reorder_level`, `unit_cost_cents`. No negative stock. Derived status: 0 out; ≤ reorder low; else in stock.
+**inventory_items** — `name`, `category` (Dental Materials, Medicines,
+Instruments, PPE, Consumables, Office Supplies), `quantity`, `unit`,
+`reorder_level`, `unit_cost_cents`. No negative stock. Derived status: 0 out; ≤
+reorder low; else in stock.
 
-**inventory_movements** — `delta`, `type` (`adjustment_in`\|`adjustment_out`\|`consumption`\|… subset in G6), `user_id`, `reason`.
+**inventory_movements** — `delta`, `type`
+(`adjustment_inadjustment_outconsumption`… subset in G6), `user_id`, `reason`.
 
 **activity_logs** — dashboard feed.
 
-**audit_logs** — `action`, `auditable_type/id`, `user_id`, `meta` json, `ip`. Patient show/index counts as access (G2).
+**audit_logs** — `action`, `auditable_type/id`, `user_id`, `meta` json, `ip`.
+Patient show/index counts as access (G2).
 
 Lookups (allergies, referred-by) stay PHP enums/config in Wave 1.
 
@@ -233,25 +314,25 @@ Lookups (allergies, referred-by) stay PHP enums/config in Wave 1.
 
 Guests: `/login`, password reset, `/up` only.
 
-| Capability | Admin | Dentist | Receptionist | Nurse | Accountant | Lab |
-|------------|:-----:|:-------:|:------------:|:-----:|:----------:|:---:|
-| Dashboard | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ (limited) |
-| Patients view | ✓ | ✓ | ✓ | ✓ | — | — |
-| Patients write / archive | ✓ | — | ✓ | — | — | — |
-| Appointments view | ✓ | ✓ | ✓ | ✓ | — | — |
-| Appointments book / cancel / check-in | ✓ | — | ✓ | check-in only | — | — |
-| Treatments / Rx / chart write | ✓ | ✓ | — | clinical view | — | — |
-| Invoices view | ✓ | ✓ | ✓ | — | ✓ | — |
-| Invoices generate / pay | ✓ | — | ✓ | — | ✓ | — |
-| Refunds / discounts authorize | ✓ | — | — | — | ✓ | — |
-| Inventory view | ✓ | ✓ | ✓ | ✓ | — | — |
-| Inventory write (G6) | ✓ | — | ✓ | ✓ | — | — |
-| Expenses (G13) | ✓ | — | — | — | ✓ | — |
-| Lab orders (G11) | ✓ | ✓ | — | — | — | ✓ |
-| Reports: ops | ✓ | scoped | ✓ | ✓ | ✓ | lab |
-| Reports: revenue | ✓ | — | — | — | ✓ | — |
-| Staff users | ✓ | — | — | — | — | — |
-| Own profile / password | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Capability                            | Admin | Dentist | Receptionist | Nurse         | Accountant | Lab         |
+| ------------------------------------- | ----- | ------- | ------------ | ------------- | ---------- | ----------- |
+| Dashboard                             | ✓     | ✓       | ✓            | ✓             | ✓          | ✓ (limited) |
+| Patients view                         | ✓     | ✓       | ✓            | ✓             | —          | —           |
+| Patients write / archive              | ✓     | —       | ✓            | —             | —          | —           |
+| Appointments view                     | ✓     | ✓       | ✓            | ✓             | —          | —           |
+| Appointments book / cancel / check-in | ✓     | —       | ✓            | check-in only | —          | —           |
+| Treatments / Rx / chart write         | ✓     | ✓       | —            | clinical view | —          | —           |
+| Invoices view                         | ✓     | ✓       | ✓            | —             | ✓          | —           |
+| Invoices generate / pay               | ✓     | —       | ✓            | —             | ✓          | —           |
+| Refunds / discounts authorize         | ✓     | —       | —            | —             | ✓          | —           |
+| Inventory view                        | ✓     | ✓       | ✓            | ✓             | —          | —           |
+| Inventory write (G6)                  | ✓     | —       | ✓            | ✓             | —          | —           |
+| Expenses (G13)                        | ✓     | —       | —            | —             | ✓          | —           |
+| Lab orders (G11)                      | ✓     | ✓       | —            | —             | —          | ✓           |
+| Reports: ops                          | ✓     | scoped  | ✓            | ✓             | ✓          | lab         |
+| Reports: revenue                      | ✓     | —       | —            | —             | ✓          | —           |
+| Staff users                           | ✓     | —       | —            | —             | —          | —           |
+| Own profile / password                | ✓     | ✓       | ✓            | ✓             | ✓          | ✓           |
 
 403 on forbidden visits and mutations. Sidebar hides unauthorized modules.
 
@@ -261,40 +342,47 @@ Guests: `/login`, password reset, `/up` only.
 
 No team prefix after G0.
 
-Wave 1 nav: Dashboard, Patients, Appointments, Treatments, Billing, Inventory, Reports, Settings.
+Wave 1 nav: Dashboard, Patients, Appointments, Treatments, Billing, Inventory,
+Reports, Settings.
 
 Wave 2 adds: Chart, Lab, Imaging, Expenses when those G-ids ship.
 
-| Screen | Must show (adapted to DCMS) |
-|--------|------------------------------|
-| Login | Split navy/white; GS brand; Welcome Back; email + password; Remember me; Forgot password; LOG IN; roles Admin · Dentist · Receptionist · Nurse · Accountant · Lab; copyright year = current |
-| Dashboard | Overview; user chip; 4 KPI cards; weekly visits; recent activity; upcoming today |
-| Patient form | First name*, Last name*, DOB*, gender*, phone*; address/occupation/email optional; medical history + emergency contact; Cancel + Save |
-| Calendar | Day grid clinic hours (not Friday); columns dentist — room; cards name + fee/procedure + color; statuses scheduled/confirmed/… |
-| Inventory | 4 summary cards; search; add; table + badges |
-| Billing | List + detail, fee lines, totals, pay (incl. mobile money fields), print receipt |
+| Screen       | Must show (adapted to DCMS)                                                                                                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Login        | Split navy/white; GS brand; Welcome Back; email + password; Remember me; Forgot password; LOG IN; roles Admin · Dentist · Receptionist · Nurse · Accountant · Lab; copyright year = current |
+| Dashboard    | Overview; user chip; 4 KPI cards; weekly visits; recent activity; upcoming today                                                                                                            |
+| Patient form | First name*, Last name*, DOB*, gender*, phone*; address/occupation/email optional; medical history + emergency contact; Cancel + Save                                                       |
+| Calendar     | Day grid clinic hours (not Friday); columns dentist — room; cards name + fee/procedure + color; statuses scheduled/confirmed/…                                                              |
+| Inventory    | 4 summary cards; search; add; table + badges                                                                                                                                                |
+| Billing      | List + detail, fee lines, totals, pay (incl. mobile money fields), print receipt                                                                                                            |
 
 ---
 
 ## 8. Example data
 
-**Contract examples** (Ahmed Ali, INV-2026-00001, ZAAD/Sahal/eDahab/MyCash samples): `dcms.json` → `example_records`.
+**Contract examples** (Ahmed Ali, INV-2026-00001, ZAAD/Sahal/eDahab/MyCash
+samples): `dcms.json` → `example_records`.
 
-**UI demo** (`golden-smile.example.json`): Maria Santos et al., three inventory SKUs, KPI generate, six staff, chairs CHAIR-001–003, fee catalog, demo password `password12`.
+**UI demo** (`golden-smile.example.json`): Maria Santos et al., three inventory
+SKUs, KPI generate, six staff, chairs CHAIR-001–003, fee catalog, demo password
+`password12`.
 
 Staff:
 
-| Name | Role | Email |
-|------|------|-------|
-| Dr. A. Santos | Admin (+ dentist, CHAIR-001 / Room 1) | `a.santos@goldensmile.clinic` |
-| Dr. R. Lim | Dentist, Room 2 | `r.lim@goldensmile.clinic` |
-| Dr. M. Cruz | Dentist, Room 3 | `m.cruz@goldensmile.clinic` |
-| Receptionist | Receptionist | `receptionist@goldensmile.clinic` |
-| Dental Nurse | Nurse | `nurse@goldensmile.clinic` |
-| Accountant | Accountant | `accountant@goldensmile.clinic` |
-| Lab staff | Lab | `lab@goldensmile.clinic` |
+| Name          | Role                                  | Email                             |
+| ------------- | ------------------------------------- | --------------------------------- |
+| Dr. A. Santos | Admin (+ dentist, CHAIR-001 / Room 1) | `a.santos@goldensmile.clinic`     |
+| Dr. R. Lim    | Dentist, Room 2                       | `r.lim@goldensmile.clinic`        |
+| Dr. M. Cruz   | Dentist, Room 3                       | `m.cruz@goldensmile.clinic`       |
+| Receptionist  | Receptionist                          | `receptionist@goldensmile.clinic` |
+| Dental Nurse  | Nurse                                 | `nurse@goldensmile.clinic`        |
+| Accountant    | Accountant                            | `accountant@goldensmile.clinic`   |
+| Lab staff     | Lab                                   | `lab@goldensmile.clinic`          |
 
-KPI generate (G9): today’s appointments 18, active patients 1,284, pending/issued invoices 7, low stock 3, out of stock 1, items 86, stock value **$1,482.00** (`148200` cents — USD, not ₱148,200), weekly visits Mon 12 … Thu 22, **Fri 0** (clinic closed), Sat 25, Sun 18.
+KPI generate (G9): today’s appointments 18, active patients 1,284,
+pending/issued invoices 7, low stock 3, out of stock 1, items 86, stock value
+**$1,482.00** (`148200` cents — USD, not ₱148,200), weekly visits Mon 12 … Thu
+22, **Fri 0** (clinic closed), Sat 25, Sun 18.
 
 Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 
@@ -308,16 +396,24 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** session routing, privileged Admin, six roles
 - **Depends on:** —
 
-- [ ] `{current_team}` prefix, team switcher, invitations, and team models/middleware are gone; `route:list` shows `/dashboard` not `/{current_team}/dashboard`
-- [ ] `users.role` is `admin\|dentist\|receptionist\|nurse\|accountant\|lab`; guests hitting `/dashboard` redirect to `/login`
-- [ ] Public registration disabled; login/logout/remember-me/forgot-password/change-password work; password min length 10
+- [ ] `{current_team}` prefix, team switcher, invitations, and team
+      models/middleware are gone; `route:list` shows `/dashboard` not
+      `/{current_team}/dashboard`
+- [ ] `users.role` is `admin\|dentist\|receptionist\|nurse\|accountant\|lab`;
+      guests hitting `/dashboard` redirect to `/login`
+- [ ] Public registration disabled;
+      login/logout/remember-me/forgot-password/change-password work; password
+      min length 10
 - [ ] Session lifetime 30 minutes
 - [ ] Login is split Golden Smile layout; no sign-up CTA; footer lists six roles
 - [ ] Chrome: navy sidebar (Wave 1 eight items), GS brand, header name + role
 - [ ] Admin can create staff of any role; other roles cannot
-- [ ] Each of the six roles can log in; Receptionist hitting staff-admin-only gets 403
-- [ ] Team feature tests removed/replaced; auth + dashboard tests pass without teams
-- [ ] `APP_NAME` / UI brand is Golden Smile Dental Clinic; app timezone `Africa/Mogadishu`
+- [ ] Each of the six roles can log in; Receptionist hitting staff-admin-only
+      gets 403
+- [ ] Team feature tests removed/replaced; auth + dashboard tests pass without
+      teams
+- [ ] `APP_NAME` / UI brand is Golden Smile Dental Clinic; app timezone
+      `Africa/Mogadishu`
 
 **Out of G0:** domain tables, real KPIs.
 
@@ -329,11 +425,19 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** schema later goals depend on
 - **Depends on:** G0
 
-- [ ] Migrations for rooms, chairs, dentists, working_hours, patients, emergency_contacts, patient_allergies, patient_conditions, patient_medications, fee_items, appointments, treatments, treatment_procedures, prescriptions, prescription_items, invoices, invoice_items, payments, mobile_money_transactions, receipts, inventory_items, inventory_movements, activity_logs, audit_logs
-- [ ] Money is integer cents; patient softDeletes; appointment overlap indexes; public number columns use DCMS formats
-- [ ] Models + relationships + factories (+ states) for each aggregate; fee_items seeded from DCMS FEE-001–009
+- [ ] Migrations for rooms, chairs, dentists, working_hours, patients,
+      emergency_contacts, patient_allergies, patient_conditions,
+      patient_medications, fee_items, appointments, treatments,
+      treatment_procedures, prescriptions, prescription_items, invoices,
+      invoice_items, payments, mobile_money_transactions, receipts,
+      inventory_items, inventory_movements, activity_logs, audit_logs
+- [ ] Money is integer cents; patient softDeletes; appointment overlap indexes;
+      public number columns use DCMS formats
+- [ ] Models + relationships + factories (+ states) for each aggregate;
+      fee_items seeded from DCMS FEE-001–009
 - [ ] `php artisan migrate:fresh` succeeds
-- [ ] Feature test: factory graph creates patient, chair appointment, treatment, invoice, ZAAD payment + mobile_money_transaction, inventory item
+- [ ] Feature test: factory graph creates patient, chair appointment, treatment,
+      invoice, ZAAD payment + mobile_money_transaction, inventory item
 
 **Out of G1:** Wave 2 tables (odontogram, lab, batches, expenses, …).
 
@@ -345,10 +449,13 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** medical records, archive, access audit
 - **Depends on:** G1
 
-- [ ] Receptionist/Admin register with required first_name, last_name, date_of_birth, phone; unique patient_number assigned
+- [ ] Receptionist/Admin register with required first_name, last_name,
+      date_of_birth, phone; unique patient_number assigned
 - [ ] Search by name, patient_number, phone, email
-- [ ] Show: identity, allergies/conditions/meds, emergency contacts, treatment history slot; viewing writes an audit/access log
-- [ ] Update; archive (read-only); Dentist/Nurse cannot create/archive; Accountant 403 on patients
+- [ ] Show: identity, allergies/conditions/meds, emergency contacts, treatment
+      history slot; viewing writes an audit/access log
+- [ ] Update; archive (read-only); Dentist/Nurse cannot create/archive;
+      Accountant 403 on patients
 - [ ] Duplicate warning when first+last+DOB match an existing patient
 - [ ] Feature tests: create/search/update/archive + 403s + audit row on show
 
@@ -360,11 +467,14 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** dentist + chair conflict, hours
 - **Depends on:** G2
 
-- [ ] Day calendar uses working_hours (Fri empty; Thu ends 13:00; else 08:00–18:00); columns dentist — room; cards patient + fee name + color
-- [ ] Receptionist/Admin book/edit/cancel/reschedule/check-in; overlap on dentist or chair → 422; cancelled does not block
+- [ ] Day calendar uses working_hours (Fri empty; Thu ends 13:00; else
+      08:00–18:00); columns dentist — room; cards patient + fee name + color
+- [ ] Receptionist/Admin book/edit/cancel/reschedule/check-in; overlap on
+      dentist or chair → 422; cancelled does not block
 - [ ] Booking outside hours or on Friday → 422
 - [ ] Statuses from DCMS settings; check-in allowed for Nurse
-- [ ] Feature tests: overlap, Friday reject, cancel frees slot, 403 for Dentist mutating
+- [ ] Feature tests: overlap, Friday reject, cancel frees slot, 403 for Dentist
+      mutating
 
 ---
 
@@ -374,9 +484,11 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** clinical write path
 - **Depends on:** G3
 
-- [ ] Dentist/Admin record diagnosis, procedures (fee_items), prescription + items; prescriber is the user
+- [ ] Dentist/Admin record diagnosis, procedures (fee_items), prescription +
+      items; prescriber is the user
 - [ ] Completing treatment may set appointment `completed`
-- [ ] Patient show lists history; Nurse can view, not POST Rx; Receptionist view-only
+- [ ] Patient show lists history; Nurse can view, not POST Rx; Receptionist
+      view-only
 - [ ] Critical allergy flags visible on the treatment form
 - [ ] Feature tests: create treatment+rx, history, 403s
 
@@ -388,13 +500,19 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** money + mobile-money recording rules
 - **Depends on:** G4
 
-- [ ] Invoice from completed treatment/fee lines; `invoice_number` unique; totals reconcile in cents
+- [ ] Invoice from completed treatment/fee lines; `invoice_number` unique;
+      totals reconcile in cents
 - [ ] Partial pay allowed; overpay rejected; statuses issued/partially_paid/paid
-- [ ] Cash: no extra refs. Card/bank: reference required. ZAAD/Sahal/eDahab/MyCash: phone + transaction_id + reference; duplicate transaction_id 422; `verification_status` required (cannot complete on reference alone)
+- [ ] Cash: no extra refs. Card/bank: reference required.
+      ZAAD/Sahal/eDahab/MyCash: phone + transaction_id + reference; duplicate
+      transaction_id 422; `verification_status` required (cannot complete on
+      reference alone)
 - [ ] Completed payment creates receipt (`RCT-…`); printable view; billing index
-- [ ] Refunds (Admin/Accountant) reference original payment; invoices not hard-deleted
+- [ ] Refunds (Admin/Accountant) reference original payment; invoices not
+      hard-deleted
 - [ ] Dentist can view invoices, not generate/pay; Lab 403 billing
-- [ ] Feature tests: generate, partial, overpay fail, duplicate ZAAD txn, receptionist pay, dentist 403 generate
+- [ ] Feature tests: generate, partial, overpay fail, duplicate ZAAD txn,
+      receptionist pay, dentist 403 generate
 
 ---
 
@@ -404,8 +522,10 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** stock UX; no payment capture
 - **Depends on:** G1
 
-- [ ] Index matches inventory screenshot: four cards, search, add, table, derived badges
-- [ ] Categories are DCMS inventory categories; quantity never negative; movements recorded
+- [ ] Index matches inventory screenshot: four cards, search, add, table,
+      derived badges
+- [ ] Categories are DCMS inventory categories; quantity never negative;
+      movements recorded
 - [ ] Nurse/Admin/Receptionist write; Dentist view; Accountant 403
 - [ ] Feature tests: status derivation, adjust, search, 403
 
@@ -419,7 +539,8 @@ May run after G1 in parallel with G2–G5. G7 still waits for G2–G6.
 - **Why:** read-model
 - **Depends on:** G2, G3, G4, G5, G6
 
-- [ ] KPIs: today’s appointments, active patients, unpaid/issued invoices, low-stock items
+- [ ] KPIs: today’s appointments, active patients, unpaid/issued invoices,
+      low-stock items
 - [ ] Weekly visits Mon–Sun; recent `activity_logs`; today’s upcoming table
 - [ ] Feature test: factory/seeded counts match cards
 
@@ -431,9 +552,13 @@ May run after G1 in parallel with G2–G5. G7 still waits for G2–G6.
 - **Why:** read-only aggregations
 - **Depends on:** G7
 
-- [ ] Hub: Daily appointments, Patient registration, Outstanding balances, Payments (incl. method breakdown), Inventory stock, Low stock, Treatment statistics
-- [ ] Date-range filters; revenue/payment totals match completed payments in range
-- [ ] Accountant + Admin see revenue; Dentist treatment stats scoped to self; Lab no finance
+- [ ] Hub: Daily appointments, Patient registration, Outstanding balances,
+      Payments (incl. method breakdown), Inventory stock, Low stock, Treatment
+      statistics
+- [ ] Date-range filters; revenue/payment totals match completed payments in
+      range
+- [ ] Accountant + Admin see revenue; Dentist treatment stats scoped to self;
+      Lab no finance
 - [ ] Feature tests per report + 403
 
 Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
@@ -446,7 +571,8 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** seeder
 - **Depends on:** G8
 
-- [ ] `db:seed` loads screenshot named records + DCMS Ahmed Ali example + generate rules
+- [ ] `db:seed` loads screenshot named records + DCMS Ahmed Ali example +
+      generate rules
 - [ ] Six staff + three dentists log in with `password12`
 - [ ] Maria Santos, calendar appointments, three SKUs, FEE catalog present
 - [ ] Dashboard KPIs match `kpis` in golden-smile example JSON
@@ -460,8 +586,10 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** clinical lock + odontogram
 - **Depends on:** G9
 
-- [ ] Encounter per completed visit (`ENC-…`); SOAP notes; draft then sign; signed notes cannot be silently edited (amendment row required)
-- [ ] FDI odontogram: statuses + surfaces from `dcms.json` dental_chart; tooth history on patient
+- [ ] Encounter per completed visit (`ENC-…`); SOAP notes; draft then sign;
+      signed notes cannot be silently edited (amendment row required)
+- [ ] FDI odontogram: statuses + surfaces from `dcms.json` dental_chart; tooth
+      history on patient
 - [ ] Treatment plan + items; acceptance status
 - [ ] Feature tests: sign lock, amendment, 403 receptionist write
 
@@ -485,10 +613,12 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** inventory integrity
 - **Depends on:** G6, G9
 
-- [ ] Batches + expiry; cannot consume expired; suppliers + purchase orders (`PO-…`)
+- [ ] Batches + expiry; cannot consume expired; suppliers + purchase orders
+      (`PO-…`)
 - [ ] Stock adjustment requires Admin (or authorized) confirmation
 - [ ] Low-stock and expiry alerts
-- [ ] Feature tests: expired block, PO receive increases qty, unauthorized adjust 403
+- [ ] Feature tests: expired block, PO receive increases qty, unauthorized
+      adjust 403
 
 ---
 
@@ -498,8 +628,10 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** money
 - **Depends on:** G5, G9
 
-- [ ] Expenses (Accountant/Admin); daily cash closing; payment plans/installments; insurance claim stub (provider + status)
-- [ ] Mobile-money daily reconciliation record (system totals vs entered provider total)
+- [ ] Expenses (Accountant/Admin); daily cash closing; payment
+      plans/installments; insurance claim stub (provider + status)
+- [ ] Mobile-money daily reconciliation record (system totals vs entered
+      provider total)
 - [ ] Feature tests: closing, expense 403 dentist, plan allocations ≤ balance
 
 ---
@@ -511,8 +643,10 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Depends on:** G3, G5
 
 - [ ] Seed DCMS communication_templates; Admin can edit
-- [ ] Queue an in-app/audit “would send” reminder for appointments at 48/24/2 hours (scheduler) **without** an SMS provider
-- [ ] Feature tests: template CRUD admin-only; no provider credentials stored on payments
+- [ ] Queue an in-app/audit “would send” reminder for appointments at 48/24/2
+      hours (scheduler) **without** an SMS provider
+- [ ] Feature tests: template CRUD admin-only; no provider credentials stored on
+      payments
 
 ---
 
@@ -545,11 +679,14 @@ G3+G5 → G14 (A-light)
 
 Do not start Wave 2 until G9 is completed (or user explicitly skips G9).
 
-**Mode rule:** auth/session, record ownership, money, signed clinical lock → A. Shell/seed/reports/templates → A-light.
+**Mode rule:** auth/session, record ownership, money, signed clinical lock → A.
+Shell/seed/reports/templates → A-light.
 
-**Tests:** each G-id adds Pest for shipped behavior. Narrow `php artisan test --compact`, then ask for the full suite.
+**Tests:** each G-id adds Pest for shipped behavior. Narrow
+`php artisan test --compact`, then ask for the full suite.
 
-**UI G-ids:** not done until the happy path is exercised in the browser (or a documented substitute).
+**UI G-ids:** not done until the happy path is exercised in the browser (or a
+documented substitute).
 
 ---
 
@@ -560,7 +697,8 @@ Do not start Wave 2 until G9 is completed (or user explicitly skips G9).
 - REST `/api/v1` (JSON contract is a future map)
 - Multi-branch, starter-kit teams
 - Somali/Arabic i18n
-- Periodontal full charting, DICOM viewer, sterilization/infection-control ops module
+- Periodontal full charting, DICOM viewer, sterilization/infection-control ops
+  module
 - New Composer/npm packages without approval
 - Mobile apps
 - Git commit/PR unless asked in the goal
@@ -569,16 +707,16 @@ Do not start Wave 2 until G9 is completed (or user explicitly skips G9).
 
 ## 12. Open questions / mappings
 
-| Topic | Resolution |
-|-------|------------|
-| JSON vs Golden Smile brand | Brand Golden Smile; domain DCMS |
-| ₱ screenshots vs USD JSON | **USD** |
-| Manila vs Mogadishu | **Africa/Mogadishu** |
-| 3 login roles vs 6 JSON roles | **6 roles**; login lists all six |
-| Room-only vs chairs | **Chairs** inside rooms; calendar still labels rooms |
-| JSON decimal money | **Integer cents** (D11) |
-| `/api/v1` | Deferred (D13) |
-| Figure 7 billing screenshot | Still missing; G5 from JSON billing + thesis text |
-| JSON `users: []` | Demo users live in golden-smile example JSON |
-| 2FA | JSON disabled; do not build in G0–G15 |
-| Encrypt at rest | APP_KEY + HTTPS; column-level encryption not in G0–G15 |
+| Topic                         | Resolution                                             |
+| ----------------------------- | ------------------------------------------------------ |
+| JSON vs Golden Smile brand    | Brand Golden Smile; domain DCMS                        |
+| ₱ screenshots vs USD JSON     | **USD**                                                |
+| Manila vs Mogadishu           | **Africa/Mogadishu**                                   |
+| 3 login roles vs 6 JSON roles | **6 roles**; login lists all six                       |
+| Room-only vs chairs           | **Chairs** inside rooms; calendar still labels rooms   |
+| JSON decimal money            | **Integer cents** (D11)                                |
+| `/api/v1`                     | Deferred (D13)                                         |
+| Figure 7 billing screenshot   | Still missing; G5 from JSON billing + thesis text      |
+| JSON `users: []`              | Demo users live in golden-smile example JSON           |
+| 2FA                           | JSON disabled; do not build in G0–G15                  |
+| Encrypt at rest               | APP_KEY + HTTPS; column-level encryption not in G0–G15 |

@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
@@ -52,13 +53,36 @@ test('password can be reset with valid token', function () {
         $response = $this->post(route('password.update'), [
             'token' => $notification->token,
             'email' => $user->email,
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'password12',
+            'password_confirmation' => 'password12',
         ]);
 
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('login'));
+
+        return true;
+    });
+});
+
+test('password cannot be reset with password shorter than ten characters', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+
+    $this->post(route('password.email'), ['email' => $user->email]);
+
+    Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        $response = $this->post(route('password.update'), [
+            'token' => $notification->token,
+            'email' => $user->email,
+            'password' => 'short9ch',
+            'password_confirmation' => 'short9ch',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+
+        expect(Hash::check('password12', $user->fresh()->password))->toBeTrue();
 
         return true;
     });
@@ -70,8 +94,8 @@ test('password cannot be reset with invalid token', function () {
     $response = $this->post(route('password.update'), [
         'token' => 'invalid-token',
         'email' => $user->email,
-        'password' => 'newpassword123',
-        'password_confirmation' => 'newpassword123',
+        'password' => 'newpassword12',
+        'password_confirmation' => 'newpassword12',
     ]);
 
     $response->assertSessionHasErrors('email');
