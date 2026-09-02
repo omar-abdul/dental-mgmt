@@ -70,17 +70,20 @@ dependencies** without user approval.
 
 ## 3. Current state
 
-**Shipped:** Laravel Vue starter kit only.
+**Shipped:** G0 clinic foundation, G1 Wave 1 schema, G2 patient management, G3 appointment scheduling, G4 treatments and prescriptions, and G6 basic inventory.
 
-- Fortify login/register/password reset/email verification
-- Team tenancy: `{current_team}` prefix, switcher, invitations
-- Placeholder dashboard; starter sidebar
-- Auth layout is not the split Golden Smile login
-- `APP_NAME=Laravel`; SQLite default
-- Architecture + DCMS JSON + screenshot demo JSON exist; **no G-id implemented**
+- Single-clinic Fortify session (no `{current_team}` / teams)
+- Six `ClinicRole` values on `users.role`; public registration off
+- Admin-only staff create; password min 10; session 30 minutes
+- Brand Golden Smile Dental Clinic; timezone `Africa/Mogadishu`
+- Split login + navy Wave 1 chrome (placeholders remain for billing, reports)
+- Wave 1 tables, models, factories; DCMS fee catalog + working hours seeded; integer cents
+- Patients: register/search/show/update/archive; unique `PAT-{YYYY}-{#####}`; audit on show
+- Appointments: day calendar from `working_hours`; book/edit/cancel/reschedule/check-in; dentist/chair overlap 422; Friday/outside-hours 422
+- Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only
+- Inventory: four cards, search, add, adjust with movements; derived stock badges; no negative qty
 
-**Next:** G0 (clinic foundation). Do not implement domain modules against the
-team URL prefix.
+**Next:** G5 (billing and payments). G7 still waits for G5 (G2–G4 and G6 are done).
 
 ---
 
@@ -396,23 +399,23 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** session routing, privileged Admin, six roles
 - **Depends on:** —
 
-- [ ] `{current_team}` prefix, team switcher, invitations, and team
+- [x] `{current_team}` prefix, team switcher, invitations, and team
       models/middleware are gone; `route:list` shows `/dashboard` not
       `/{current_team}/dashboard`
-- [ ] `users.role` is `admin\|dentist\|receptionist\|nurse\|accountant\|lab`;
+- [x] `users.role` is `admin\|dentist\|receptionist\|nurse\|accountant\|lab`;
       guests hitting `/dashboard` redirect to `/login`
-- [ ] Public registration disabled;
+- [x] Public registration disabled;
       login/logout/remember-me/forgot-password/change-password work; password
       min length 10
-- [ ] Session lifetime 30 minutes
-- [ ] Login is split Golden Smile layout; no sign-up CTA; footer lists six roles
-- [ ] Chrome: navy sidebar (Wave 1 eight items), GS brand, header name + role
-- [ ] Admin can create staff of any role; other roles cannot
-- [ ] Each of the six roles can log in; Receptionist hitting staff-admin-only
+- [x] Session lifetime 30 minutes
+- [x] Login is split Golden Smile layout; no sign-up CTA; footer lists six roles
+- [x] Chrome: navy sidebar (Wave 1 eight items), GS brand, header name + role
+- [x] Admin can create staff of any role; other roles cannot
+- [x] Each of the six roles can log in; Receptionist hitting staff-admin-only
       gets 403
-- [ ] Team feature tests removed/replaced; auth + dashboard tests pass without
+- [x] Team feature tests removed/replaced; auth + dashboard tests pass without
       teams
-- [ ] `APP_NAME` / UI brand is Golden Smile Dental Clinic; app timezone
+- [x] `APP_NAME` / UI brand is Golden Smile Dental Clinic; app timezone
       `Africa/Mogadishu`
 
 **Out of G0:** domain tables, real KPIs.
@@ -425,18 +428,18 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** schema later goals depend on
 - **Depends on:** G0
 
-- [ ] Migrations for rooms, chairs, dentists, working_hours, patients,
+- [x] Migrations for rooms, chairs, dentists, working_hours, patients,
       emergency_contacts, patient_allergies, patient_conditions,
       patient_medications, fee_items, appointments, treatments,
       treatment_procedures, prescriptions, prescription_items, invoices,
       invoice_items, payments, mobile_money_transactions, receipts,
       inventory_items, inventory_movements, activity_logs, audit_logs
-- [ ] Money is integer cents; patient softDeletes; appointment overlap indexes;
+- [x] Money is integer cents; patient softDeletes; appointment overlap indexes;
       public number columns use DCMS formats
-- [ ] Models + relationships + factories (+ states) for each aggregate;
+- [x] Models + relationships + factories (+ states) for each aggregate;
       fee_items seeded from DCMS FEE-001–009
-- [ ] `php artisan migrate:fresh` succeeds
-- [ ] Feature test: factory graph creates patient, chair appointment, treatment,
+- [x] `php artisan migrate:fresh` succeeds
+- [x] Feature test: factory graph creates patient, chair appointment, treatment,
       invoice, ZAAD payment + mobile_money_transaction, inventory item
 
 **Out of G1:** Wave 2 tables (odontogram, lab, batches, expenses, …).
@@ -449,15 +452,15 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** medical records, archive, access audit
 - **Depends on:** G1
 
-- [ ] Receptionist/Admin register with required first_name, last_name,
+- [x] Receptionist/Admin register with required first_name, last_name,
       date_of_birth, phone; unique patient_number assigned
-- [ ] Search by name, patient_number, phone, email
-- [ ] Show: identity, allergies/conditions/meds, emergency contacts, treatment
+- [x] Search by name, patient_number, phone, email
+- [x] Show: identity, allergies/conditions/meds, emergency contacts, treatment
       history slot; viewing writes an audit/access log
-- [ ] Update; archive (read-only); Dentist/Nurse cannot create/archive;
+- [x] Update; archive (read-only); Dentist/Nurse cannot create/archive;
       Accountant 403 on patients
-- [ ] Duplicate warning when first+last+DOB match an existing patient
-- [ ] Feature tests: create/search/update/archive + 403s + audit row on show
+- [x] Duplicate warning when first+last+DOB match an existing patient
+- [x] Feature tests: create/search/update/archive + 403s + audit row on show
 
 ---
 
@@ -467,13 +470,13 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** dentist + chair conflict, hours
 - **Depends on:** G2
 
-- [ ] Day calendar uses working_hours (Fri empty; Thu ends 13:00; else
+- [x] Day calendar uses working_hours (Fri empty; Thu ends 13:00; else
       08:00–18:00); columns dentist — room; cards patient + fee name + color
-- [ ] Receptionist/Admin book/edit/cancel/reschedule/check-in; overlap on
+- [x] Receptionist/Admin book/edit/cancel/reschedule/check-in; overlap on
       dentist or chair → 422; cancelled does not block
-- [ ] Booking outside hours or on Friday → 422
-- [ ] Statuses from DCMS settings; check-in allowed for Nurse
-- [ ] Feature tests: overlap, Friday reject, cancel frees slot, 403 for Dentist
+- [x] Booking outside hours or on Friday → 422
+- [x] Statuses from DCMS settings; check-in allowed for Nurse
+- [x] Feature tests: overlap, Friday reject, cancel frees slot, 403 for Dentist
       mutating
 
 ---
@@ -484,13 +487,13 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** clinical write path
 - **Depends on:** G3
 
-- [ ] Dentist/Admin record diagnosis, procedures (fee_items), prescription +
+- [x] Dentist/Admin record diagnosis, procedures (fee_items), prescription +
       items; prescriber is the user
-- [ ] Completing treatment may set appointment `completed`
-- [ ] Patient show lists history; Nurse can view, not POST Rx; Receptionist
+- [x] Completing treatment may set appointment `completed`
+- [x] Patient show lists history; Nurse can view, not POST Rx; Receptionist
       view-only
-- [ ] Critical allergy flags visible on the treatment form
-- [ ] Feature tests: create treatment+rx, history, 403s
+- [x] Critical allergy flags visible on the treatment form
+- [x] Feature tests: create treatment+rx, history, 403s
 
 ---
 
@@ -522,12 +525,12 @@ Also seed Ahmed Ali (`PAT-2026-00001`) from DCMS examples.
 - **Why:** stock UX; no payment capture
 - **Depends on:** G1
 
-- [ ] Index matches inventory screenshot: four cards, search, add, table,
+- [x] Index matches inventory screenshot: four cards, search, add, table,
       derived badges
-- [ ] Categories are DCMS inventory categories; quantity never negative;
+- [x] Categories are DCMS inventory categories; quantity never negative;
       movements recorded
-- [ ] Nurse/Admin/Receptionist write; Dentist view; Accountant 403
-- [ ] Feature tests: status derivation, adjust, search, 403
+- [x] Nurse/Admin/Receptionist write; Dentist view; Accountant 403
+- [x] Feature tests: status derivation, adjust, search, 403
 
 May run after G1 in parallel with G2–G5. G7 still waits for G2–G6.
 

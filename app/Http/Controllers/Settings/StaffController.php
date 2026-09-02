@@ -8,6 +8,7 @@ use App\Http\Requests\Settings\StoreStaffRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,7 +16,7 @@ class StaffController extends Controller
 {
     public function index(Request $request): Response
     {
-        $this->authorize('viewStaff');
+        Gate::authorize('viewStaff');
 
         return Inertia::render('settings/Staff', [
             'staff' => User::query()
@@ -37,7 +38,7 @@ class StaffController extends Controller
 
     public function create(Request $request): Response
     {
-        $this->authorize('createStaff');
+        Gate::authorize('createStaff');
 
         return Inertia::render('settings/Staff', [
             'staff' => User::query()

@@ -22,5 +22,10 @@ class DatabaseSeeder extends Seeder
             'password' => 'password12',
             'role' => ClinicRole::Admin,
         ]);
+
+        $this->call([
+            FeeItemSeeder::class,
+            WorkingHourSeeder::class,
+        ]);
     }
 }

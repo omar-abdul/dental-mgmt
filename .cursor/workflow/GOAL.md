@@ -1,48 +1,50 @@
-# GOAL — Clinic foundation (auth, shell, retire teams)
+# GOAL — Treatments and prescriptions
 
-- **Architecture id:** G0
+- **Architecture id:** G4
 - **Mode:** A
-- **Why:** session routing, privileged Admin, six clinic roles, Fortify surface
-- **Started:** 2026-09-02
-- **Owner run:** g0-clinic-foundation
+- **Why:** clinical write path
+- **Started:** 2026-09-03
+- **Closed:** 2026-09-03
+- **Owner run:** g4-treatments-prescriptions
 
 ## Summary
 
-Retire starter-kit teams, put six clinic roles on `users`, disable public registration, and ship Golden Smile login plus navy Wave 1 chrome so staff can sign in and an Admin can create other staff.
+Replace the treatments placeholder so Dentist/Admin can record diagnosis, fee-item procedures, and a prescription (prescriber = logged-in user). Completing a treatment may set the linked appointment to `completed`. Patient show lists treatment history. Nurse views, cannot POST Rx. Receptionist is view-only. Critical allergy flags are visible on the treatment form.
+
+**Closed.** T1–T3 completed. Mode A: R1 High + R2–R4 Medium fixed; R5 deferred to B15. Sail test gate 159 passed.
 
 ## Scope in
 
-- Drop `{current_team}` prefix, team switcher, invitations, team models/middleware/tests
-- `ClinicRole` + `users.role`; policies/helpers; Admin-only staff create
-- Fortify: no public register, no email verification as product; login/logout/remember/forgot/change-password; password min 10
-- Session lifetime 30 minutes; timezone `Africa/Mogadishu`; brand Golden Smile Dental Clinic
-- Split Golden Smile login; navy sidebar with eight Wave 1 items; header name + role
-- Pest: auth + dashboard without teams; six-role login; 403 on staff-admin-only
+- Inertia treatments index (keep route name `treatments.index`) plus create/show as needed
+- `TreatmentPolicy`: view Admin/Dentist/Receptionist/Nurse; write (create/update/complete/Rx) Admin/Dentist only
+- Diagnosis, procedures (`fee_items`, optional `tooth_fdi`, quantity; `fee_cents` from fee catalog × quantity, integer cents)
+- Prescription + items; `prescriber_id` is the authenticated user; sequential `RX-{YYYY}-{#####}` with lock (match G2/G3 generators)
+- Completing treatment with `appointment_id` may set that appointment `completed`
+- Patient show treatment history (not just `#id`)
+- Critical allergy (`is_critical`) flags visible on the treatment form
+- Pest: create treatment+rx, history on patient show, 403s (Nurse POST Rx, Receptionist mutate, Accountant/Lab GET)
+- Wayfinder Vue imports (`@/actions`, `@/routes`)
+- Keep Receptionist GET `treatments.index` 200 (`PlaceholderModuleTest`)
 
 ## Scope out
 
-- Domain tables (patients, appointments, billing, inventory, …) — G1
-- Real dashboard KPIs — G7
-- Full screenshot demo seed (six named staff, Maria Santos, …) — G9
-- Live SMS/payment APIs, REST `/api/v1`, 2FA, i18n
+- Invoices / payments (G5)
+- Odontogram / chart lock (G10)
+- Lab orders (G11)
+- G9 named demo treatments
+- REST `/api/v1`, new Composer/npm packages
+- Do not hide Receptionist Treatments nav (B2: view-only; mutations 403)
 
 ## Verification (from architecture or user)
 
-- [ ] `{current_team}` prefix, team switcher, invitations, and team models/middleware are gone; `route:list` shows `/dashboard` not `/{current_team}/dashboard`
-- [ ] `users.role` is `admin|dentist|receptionist|nurse|accountant|lab`; guests hitting `/dashboard` redirect to `/login`
-- [ ] Public registration disabled; login/logout/remember-me/forgot-password/change-password work; password min length 10
-- [ ] Session lifetime 30 minutes
-- [ ] Login is split Golden Smile layout; no sign-up CTA; footer lists six roles
-- [ ] Chrome: navy sidebar (Wave 1 eight items), GS brand, header name + role
-- [ ] Admin can create staff of any role; other roles cannot
-- [ ] Each of the six roles can log in; Receptionist hitting staff-admin-only gets 403
-- [ ] Team feature tests removed/replaced; auth + dashboard tests pass without teams
-- [ ] `APP_NAME` / UI brand is Golden Smile Dental Clinic; app timezone `Africa/Mogadishu`
+- [x] Dentist/Admin record diagnosis, procedures (fee_items), prescription + items; prescriber is the user
+- [x] Completing treatment may set appointment `completed`
+- [x] Patient show lists history; Nurse can view, not POST Rx; Receptionist view-only
+- [x] Critical allergy flags visible on the treatment form
+- [x] Feature tests: create treatment+rx, history, 403s
 
 ## Notes
 
-- Architecture D1–D3, D9, §6, §7 login/chrome. Guests: `/login`, password reset, `/up` only — `/` should redirect to login (or dashboard if authenticated).
-- Demo password `password12`. Do not add Composer/npm packages.
-- Keep Fortify session, profile, password change. Do not enable 2FA.
-- Placeholder module pages (patients … reports) are allowed so the eight nav items exist; no domain schema.
-- Prior run residue: workflow Backlog B1 (Figure 7) expires 2026-10-02 — leave it.
+- Architecture §5.2 treatments/prescriptions, §6 Treatments/Rx write row, D11 cents. Empty Controller → `Gate::authorize`.
+- Host PHP 8.3; tests: `./vendor/bin/sail artisan test --compact`. Do **not** `migrate:fresh` without `--seed`.
+- Prior Backlog B1–B14 remain; G4 residue B15 expires 2026-10-03.
