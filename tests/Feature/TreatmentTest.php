@@ -423,3 +423,28 @@ test('inactive fee item cannot be used in treatment procedures', function () {
 
     expect(Treatment::query()->count())->toBe(0);
 });
+
+test('receptionist sees generate invoice on a completed treatment without an invoice', function () {
+    $receptionist = User::factory()->receptionist()->create();
+    $treatment = Treatment::factory()->completed()->create();
+
+    $this->actingAs($receptionist)
+        ->get(route('treatments.show', $treatment))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('treatments/Show')
+            ->where('canGenerateInvoice', true)
+            ->where('canComplete', false));
+});
+
+test('dentist cannot generate invoice from treatment show', function () {
+    $dentistUser = User::factory()->dentist()->create();
+    $treatment = Treatment::factory()->completed()->create();
+
+    $this->actingAs($dentistUser)
+        ->get(route('treatments.show', $treatment))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('treatments/Show')
+            ->where('canGenerateInvoice', false));
+});

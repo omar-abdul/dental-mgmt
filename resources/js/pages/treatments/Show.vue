@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import BillingController from '@/actions/App/Http/Controllers/BillingController';
 import TreatmentController from '@/actions/App/Http/Controllers/TreatmentController';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { index as treatmentsIndex } from '@/routes/treatments';
+import { show as encountersShow } from '@/routes/encounters';
 
 type Procedure = {
     id: number;
@@ -46,11 +48,16 @@ type TreatmentDetail = {
         prescribed_at_formatted: string;
         items: PrescriptionItem[];
     } | null;
+    encounter: {
+        id: number;
+        number: string;
+    } | null;
 };
 
 defineProps<{
     treatment: TreatmentDetail;
     canComplete: boolean;
+    canGenerateInvoice: boolean;
 }>();
 
 function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -106,6 +113,18 @@ defineOptions({
                         <dt class="text-muted-foreground">Appointment</dt>
                         <dd>{{ treatment.appointment.number }}</dd>
                     </div>
+                    <div v-if="treatment.encounter" class="flex justify-between gap-4">
+                        <dt class="text-muted-foreground">Encounter</dt>
+                        <dd>
+                            <Link
+                                :href="encountersShow(treatment.encounter.id)"
+                                class="text-primary hover:underline"
+                                data-test="treatment-encounter-link"
+                            >
+                                {{ treatment.encounter.number }}
+                            </Link>
+                        </dd>
+                    </div>
                     <div v-if="treatment.notes" class="space-y-1">
                         <dt class="text-muted-foreground">Notes</dt>
                         <dd>{{ treatment.notes }}</dd>
@@ -158,13 +177,25 @@ defineOptions({
             </ul>
         </section>
 
-        <div class="flex gap-3">
+        <div class="flex flex-wrap gap-3">
             <Form
                 v-if="canComplete"
                 v-bind="TreatmentController.complete.form(treatment.id)"
                 v-slot="{ processing }"
             >
-                <Button type="submit" :disabled="processing">Mark completed</Button>
+                <Button type="submit" :disabled="processing" data-test="complete-treatment-button">
+                    Mark completed
+                </Button>
+            </Form>
+
+            <Form
+                v-if="canGenerateInvoice"
+                v-bind="BillingController.generateFromTreatment.form(treatment.id)"
+                v-slot="{ processing }"
+            >
+                <Button type="submit" :disabled="processing" data-test="generate-invoice-button">
+                    Generate invoice
+                </Button>
             </Form>
 
             <Button as-child variant="outline">

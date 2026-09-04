@@ -27,6 +27,13 @@ class StoreInventoryItemRequest extends FormRequest
             'unit' => ['required', 'string', 'max:50'],
             'reorder_level' => ['required', 'integer', 'min:0'],
             'unit_cost' => ['required', 'numeric', 'min:0'],
+            'expiry_date' => [
+                Rule::requiredIf(fn (): bool => $this->integer('quantity') > 0),
+                'nullable',
+                'date',
+                'after_or_equal:today',
+            ],
+            'batch_number' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

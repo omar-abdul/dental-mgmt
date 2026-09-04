@@ -58,6 +58,11 @@ class InventoryItem extends Model
         return $this->hasMany(InventoryMovement::class);
     }
 
+    public function batches(): HasMany
+    {
+        return $this->hasMany(InventoryBatch::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

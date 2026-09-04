@@ -16,7 +16,17 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
+
+pest()->browser()->timeout(10_000);
+
+pest()->beforeEach(function (): void {
+    $hotFile = public_path('hot');
+
+    if (is_file($hotFile)) {
+        unlink($hotFile);
+    }
+})->in('Browser');
 
 /*
 |--------------------------------------------------------------------------

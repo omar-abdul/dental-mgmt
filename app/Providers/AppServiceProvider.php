@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('viewStaff', fn (User $user): bool => $user->isAdmin());
         Gate::define('createStaff', fn (User $user): bool => $user->isAdmin());
+        Gate::define('manageNotificationTemplates', fn (User $user): bool => $user->isAdmin());
 
         $this->configureDefaults();
     }

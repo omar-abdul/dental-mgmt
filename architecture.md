@@ -43,7 +43,8 @@ later approved goal.
 ## 2. Stack and constraints
 
 Already in the repo (Laravel Vue starter kit). **Do not add Composer/npm
-dependencies** without user approval.
+dependencies** without user approval. Approved for this app: `pestphp/pest-plugin-browser`
+and the `playwright` npm package (staff UI E2E).
 
 | Layer   | Choice                                                                                          |
 | ------- | ----------------------------------------------------------------------------------------------- |
@@ -52,7 +53,7 @@ dependencies** without user approval.
 | Auth    | Fortify session; staff-only                                                                     |
 | Front   | Inertia v3 + Vue 3 + Tailwind 4 + existing `components/ui`                                      |
 | Routes  | Wayfinder (`@/actions`, `@/routes`)                                                             |
-| Tests   | Pest feature tests; factories over tinker                                                       |
+| Tests   | Pest HTTP feature tests **and** Pest Playwright browser tests (`tests/Browser`)                  |
 | Money   | Integer **USD cents** (`$1.00 = 100`). Never float. JSON decimals map 20 → `2000`               |
 | Time    | `Africa/Mogadishu`. Store timezone-aware datetimes.                                             |
 | Dates   | `YYYY-MM-DD` in APIs/DB; UI may format for display                                              |
@@ -70,22 +71,30 @@ dependencies** without user approval.
 
 ## 3. Current state
 
-**Shipped:** G0 clinic foundation, G1 Wave 1 schema, G2 patient management, G3 appointment scheduling, G4 treatments and prescriptions, G5 billing and payments, G6 basic inventory, and G7 dashboard.
+**Shipped:** G0–G15 (clinic foundation through imaging orders) and Pest Playwright browser coverage for those pages.
 
 - Single-clinic Fortify session (no `{current_team}` / teams)
 - Six `ClinicRole` values on `users.role`; public registration off
 - Admin-only staff create; password min 10; session 30 minutes
 - Brand Golden Smile Dental Clinic; timezone `Africa/Mogadishu`
-- Split login + navy Wave 1 chrome (reports hub still placeholder)
+- Split login + navy Wave 1 chrome with a live Reports hub (seven Wave 1 reports)
 - Wave 1 tables, models, factories; DCMS fee catalog + working hours seeded; integer cents
 - Patients: register/search/show/update/archive; unique `PAT-{YYYY}-{#####}`; audit on show
 - Appointments: day calendar from `working_hours`; book/edit/cancel/reschedule/check-in; dentist/chair overlap 422; Friday/outside-hours 422; patient typeahead on book/edit
-- Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only; patient typeahead on create
-- Billing: invoice from completed treatment; partial/overpay rules; recorded ZAAD/Sahal/eDahab/MyCash; receipts; Admin/Accountant refunds; Dentist view-only
-- Inventory: four cards, search, add, adjust with movements; derived stock badges; no negative qty
+- Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only; patient typeahead on create; receptionist can generate an invoice from a completed treatment show
+- Billing: invoice from completed treatment; partial/overpay rules; recorded ZAAD/Sahal/eDahab/MyCash; receipts; Admin/Accountant refunds; Dentist view-only; expenses, daily cash close, payment plans, insurance claim stub, MM recon (Admin/Accountant)
+- Inventory: four cards, search, add, adjust (Admin confirmation); batches + expiry; PO receive; suppliers; expiry alerts; no negative qty; expired consume blocked
 - Dashboard: four role-scoped KPI cards, Mon–Sun weekly visits, recent activity, upcoming today; Lab limited
+- Browser tests (`tests/Browser`, Pest + Playwright): login, dashboard, patients, appointments, treatments, billing, inventory (incl. PO receive / expired consume), staff, reports, chart/encounters, lab orders, notification templates, imaging orders, Golden Smile named-seed login, nav/UX; HTTP feature tests still own 403/validation matrices
 
-**Next:** G8 (reports). G2–G7 are done.
+- Reports: hub + daily appointments, patient registration, outstanding balances, payments (method breakdown), inventory stock, low stock, treatment statistics; date range; Admin/Accountant revenue; Dentist self-scoped clinical stats; Lab no finance
+- Demo seed: named Golden Smile staff/patients (incl. Ahmed Ali `PAT-2026-00001`, Maria Santos), appointments, three SKUs, FEE catalog; generate extras match JSON `kpis` (1,284 active patients, 18 today appts, 7 unpaid invoices, inventory 86 / low 3 / out 1 / $1,482.00). Pest uses named-only seeder. Weekly `fri: 0` holds when seed day is not Friday.
+- Chart: encounter per completed treatment (`ENC-…`); SOAP draft/sign/amendment lock; FDI odontogram + tooth history; treatment plans with item acceptance; Admin/Dentist write; Nurse view; Receptionist 403
+- Lab: `LAB-…` orders with DCMS statuses; Admin/Dentist/Lab CRUD; Receptionist 403; no invoice from lab orders
+- Notifications: DCMS templates (Admin edit); hourly `appointments:queue-reminders` writes `notification.would_send` audit at 48/24/2 hours; no SMS provider
+- Imaging: `IMG-…` orders with result metadata and optional file on the Laravel disk; Admin/Dentist write; Nurse view; Receptionist 403; no DICOM viewer
+
+**Next:** none. Architecture G0–G15 are complete.
 
 ---
 
@@ -557,14 +566,16 @@ May run after G1 in parallel with G2–G5. G7 still waits for G2–G6.
 - **Why:** read-only aggregations
 - **Depends on:** G7
 
-- [ ] Hub: Daily appointments, Patient registration, Outstanding balances,
+- [x] Hub: Daily appointments, Patient registration, Outstanding balances,
       Payments (incl. method breakdown), Inventory stock, Low stock, Treatment
       statistics
-- [ ] Date-range filters; revenue/payment totals match completed payments in
+- [x] Date-range filters; revenue/payment totals match completed payments in
       range
-- [ ] Accountant + Admin see revenue; Dentist treatment stats scoped to self;
+- [x] Accountant + Admin see revenue; Dentist treatment stats scoped to self;
       Lab no finance
-- [ ] Feature tests per report + 403
+- [x] Feature tests per report + 403
+- [x] Browser test: Admin opens the reports hub, applies a date range, and sees
+      matching payment/ops totals on the page and in the database
 
 Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 
@@ -576,12 +587,14 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** seeder
 - **Depends on:** G8
 
-- [ ] `db:seed` loads screenshot named records + DCMS Ahmed Ali example +
+- [x] `db:seed` loads screenshot named records + DCMS Ahmed Ali example +
       generate rules
-- [ ] Six staff + three dentists log in with `password12`
-- [ ] Maria Santos, calendar appointments, three SKUs, FEE catalog present
-- [ ] Dashboard KPIs match `kpis` in golden-smile example JSON
-- [ ] Pest uses factories, not the 1,284-patient generate set
+- [x] Six staff + three dentists log in with `password12`
+- [x] Maria Santos, calendar appointments, three SKUs, FEE catalog present
+- [x] Dashboard KPIs match `kpis` in golden-smile example JSON
+- [x] Pest uses factories, not the 1,284-patient generate set
+- [x] Browser test: demo staff can log in with `password12` and the dashboard
+      shows the seeded Golden Smile names/KPIs
 
 ---
 
@@ -591,12 +604,14 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** clinical lock + odontogram
 - **Depends on:** G9
 
-- [ ] Encounter per completed visit (`ENC-…`); SOAP notes; draft then sign;
+- [x] Encounter per completed visit (`ENC-…`); SOAP notes; draft then sign;
       signed notes cannot be silently edited (amendment row required)
-- [ ] FDI odontogram: statuses + surfaces from `dcms.json` dental_chart; tooth
+- [x] FDI odontogram: statuses + surfaces from `dcms.json` dental_chart; tooth
       history on patient
-- [ ] Treatment plan + items; acceptance status
-- [ ] Feature tests: sign lock, amendment, 403 receptionist write
+- [x] Treatment plan + items; acceptance status
+- [x] Feature tests: sign lock, amendment, 403 receptionist write
+- [x] Browser test: Dentist signs an encounter and cannot silently edit it;
+      receptionist cannot write
 
 ---
 
@@ -606,9 +621,11 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** lab workflow; money stays on invoices
 - **Depends on:** G10
 
-- [ ] Lab staff/Dentist/Admin CRUD lab orders (`LAB-…`) with DCMS lab_statuses
-- [ ] Lab role can access lab module; Receptionist 403
-- [ ] Feature tests: status transitions + 403
+- [x] Lab staff/Dentist/Admin CRUD lab orders (`LAB-…`) with DCMS lab_statuses
+- [x] Lab role can access lab module; Receptionist 403
+- [x] Feature tests: status transitions + 403
+- [x] Browser test: Lab staff move an order through DCMS statuses; Receptionist
+      cannot open the module
 
 ---
 
@@ -618,12 +635,14 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** inventory integrity
 - **Depends on:** G6, G9
 
-- [ ] Batches + expiry; cannot consume expired; suppliers + purchase orders
+- [x] Batches + expiry; cannot consume expired; suppliers + purchase orders
       (`PO-…`)
-- [ ] Stock adjustment requires Admin (or authorized) confirmation
-- [ ] Low-stock and expiry alerts
-- [ ] Feature tests: expired block, PO receive increases qty, unauthorized
+- [x] Stock adjustment requires Admin (or authorized) confirmation
+- [x] Low-stock and expiry alerts
+- [x] Feature tests: expired block, PO receive increases qty, unauthorized
       adjust 403
+- [x] Browser test: receive a PO, see quantity increase, and expired stock
+      cannot be consumed
 
 ---
 
@@ -633,11 +652,13 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** money
 - **Depends on:** G5, G9
 
-- [ ] Expenses (Accountant/Admin); daily cash closing; payment
+- [x] Expenses (Accountant/Admin); daily cash closing; payment
       plans/installments; insurance claim stub (provider + status)
-- [ ] Mobile-money daily reconciliation record (system totals vs entered
+- [x] Mobile-money daily reconciliation record (system totals vs entered
       provider total)
-- [ ] Feature tests: closing, expense 403 dentist, plan allocations ≤ balance
+- [x] Feature tests: closing, expense 403 dentist, plan allocations ≤ balance
+- [x] Browser test: Accountant records an expense and a cash close; dentist is
+      blocked
 
 ---
 
@@ -647,11 +668,13 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** templates only
 - **Depends on:** G3, G5
 
-- [ ] Seed DCMS communication_templates; Admin can edit
-- [ ] Queue an in-app/audit “would send” reminder for appointments at 48/24/2
+- [x] Seed DCMS communication_templates; Admin can edit
+- [x] Queue an in-app/audit “would send” reminder for appointments at 48/24/2
       hours (scheduler) **without** an SMS provider
-- [ ] Feature tests: template CRUD admin-only; no provider credentials stored on
+- [x] Feature tests: template CRUD admin-only; no provider credentials stored on
       payments
+- [x] Browser test: Admin edits a template; scheduler writes a would-send audit
+      without calling an SMS provider
 
 ---
 
@@ -661,9 +684,11 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 - **Why:** orders/attachments, not a PACS
 - **Depends on:** G10
 
-- [ ] Imaging order + result metadata; optional file on Laravel disk
-- [ ] Dentist/Admin write; no new npm DICOM viewer
-- [ ] Feature tests: create order, 403 receptionist write
+- [x] Imaging order + result metadata; optional file on Laravel disk
+- [x] Dentist/Admin write; no new npm DICOM viewer
+- [x] Feature tests: create order, 403 receptionist write
+- [x] Browser test: Dentist creates an imaging order with optional file;
+      receptionist cannot write
 
 ---
 
@@ -687,11 +712,17 @@ Do not start Wave 2 until G9 is completed (or user explicitly skips G9).
 **Mode rule:** auth/session, record ownership, money, signed clinical lock → A.
 Shell/seed/reports/templates → A-light.
 
-**Tests:** each G-id adds Pest for shipped behavior. Narrow
-`php artisan test --compact`, then ask for the full suite.
+**Tests:** each G-id adds Pest for shipped behavior. HTTP feature tests cover
+auth, validation, 403s, and persistence. Browser tests in `tests/Browser` cover
+the staff click/fill path through the Vue page to the visible result **and** the
+database (or other backend) result. Run the narrowest set with
+`./vendor/bin/sail artisan test --compact tests/Browser` (or the touched Feature
+file), then ask for the full suite.
 
-**UI G-ids:** not done until the happy path is exercised in the browser (or a
-documented substitute).
+**UI G-ids:** not done until a Pest browser test exercises the happy path
+(button/form → expected page/UI → expected DB or other backend state). HTTP-only
+coverage is not enough for pages staff use. Install Playwright browsers with
+`PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium`.
 
 ---
 

@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\ClinicRole;
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -16,16 +14,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Dr. A. Santos',
-            'email' => 'a.santos@goldensmile.clinic',
-            'password' => 'password12',
-            'role' => ClinicRole::Admin,
-        ]);
-
         $this->call([
             FeeItemSeeder::class,
             WorkingHourSeeder::class,
+            CommunicationTemplateSeeder::class,
+            GoldenSmileNamedSeeder::class,
+            GoldenSmileGenerateSeeder::class,
         ]);
     }
 }

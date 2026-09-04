@@ -65,7 +65,7 @@ defineOptions({
             />
 
             <Button v-if="canCreate" as-child>
-                <Link :href="treatmentsCreate()">Record treatment</Link>
+                <Link :href="treatmentsCreate()" data-test="record-treatment-link">Record treatment</Link>
             </Button>
         </div>
 

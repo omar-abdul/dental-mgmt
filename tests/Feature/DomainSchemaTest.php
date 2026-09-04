@@ -115,7 +115,10 @@ test('payment factory derives patient_id from invoice by default', function () {
 });
 
 test('database seeder inserts nine fee items and seven working hours with friday closed', function () {
-    $this->seed();
+    $this->seed([
+        FeeItemSeeder::class,
+        WorkingHourSeeder::class,
+    ]);
 
     expect(FeeItem::query()->count())->toBe(9);
     expect(WorkingHour::query()->count())->toBe(7);

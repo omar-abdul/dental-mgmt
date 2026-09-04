@@ -9,6 +9,10 @@ import {
     Stethoscope,
     Users,
     BarChart3,
+    ClipboardList,
+    FlaskConical,
+    ScanLine,
+    Wallet,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -25,7 +29,11 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as appointmentsIndex } from '@/routes/appointments';
+import { index as chartIndex } from '@/routes/chart';
+import { index as imagingIndex } from '@/routes/imaging';
+import { index as labIndex } from '@/routes/lab';
 import { index as billingIndex } from '@/routes/billing';
+import { index as expensesIndex } from '@/routes/expenses';
 import { index as inventoryIndex } from '@/routes/inventory';
 import { index as patientsIndex } from '@/routes/patients';
 import { index as reportsIndex } from '@/routes/reports';
@@ -54,7 +62,31 @@ const allNavItems: NavItem[] = [
         icon: Stethoscope,
         module: 'treatments',
     },
+    {
+        title: 'Chart',
+        href: chartIndex(),
+        icon: ClipboardList,
+        module: 'chart',
+    },
+    {
+        title: 'Lab',
+        href: labIndex(),
+        icon: FlaskConical,
+        module: 'lab',
+    },
+    {
+        title: 'Imaging',
+        href: imagingIndex(),
+        icon: ScanLine,
+        module: 'imaging',
+    },
     { title: 'Billing', href: billingIndex(), icon: Receipt, module: 'billing' },
+    {
+        title: 'Expenses',
+        href: expensesIndex(),
+        icon: Wallet,
+        module: 'expenses',
+    },
     {
         title: 'Inventory',
         href: inventoryIndex(),

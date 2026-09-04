@@ -33,11 +33,6 @@ class PlaceholderModuleController extends Controller
         return $this->render($request, 'inventory', 'Inventory');
     }
 
-    public function reports(Request $request): Response
-    {
-        return $this->render($request, 'reports', 'Reports');
-    }
-
     private function render(Request $request, string $module, string $title): Response
     {
         $user = $request->user();

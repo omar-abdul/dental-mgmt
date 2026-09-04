@@ -34,5 +34,8 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Install Playwright Chromium
+        run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium --with-deps
+
       - name: Run CI Checks
         run: composer ci:check

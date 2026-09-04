@@ -111,6 +111,26 @@ class Patient extends Model
         return $this->hasMany(Prescription::class);
     }
 
+    public function encounters(): HasMany
+    {
+        return $this->hasMany(Encounter::class);
+    }
+
+    public function odontogramTeeth(): HasMany
+    {
+        return $this->hasMany(OdontogramTooth::class);
+    }
+
+    public function toothHistories(): HasMany
+    {
+        return $this->hasMany(ToothHistory::class);
+    }
+
+    public function treatmentPlans(): HasMany
+    {
+        return $this->hasMany(TreatmentPlan::class);
+    }
+
     public function resolveRouteBinding($value, $field = null): ?self
     {
         return static::withTrashed()

@@ -2,6 +2,69 @@
 
 Per-run fix log for goal-workflow Corrector appends. Architecture goal completions go in root `changelog.md`.
 
+## 2026-09-04 — G13 Finance extras — correct pass
+
+### Fixed
+
+- **R1** — Cash/MM system totals net Completed inflows minus same-day Refunded outflows (method/provider/date); refund feature tests added (`DailyCashClosingService.php`, `MobileMoneyReconciliationService.php`, `FinanceExtrasTest.php`)
+- **R2** — Cumulative active plan allocations capped at invoice balance via `PaymentPlan::activeAllocatedCentsForInvoice()`; two-plan overflow test added (`StorePaymentPlanRequest.php`, `PaymentPlan.php`, `FinanceExtrasTest.php`)
+- **R3** — Payment plan create locks invoice with `lockForUpdate()` and re-validates allocatable balance inside transaction (`PaymentPlanController.php`)
+- **R4** — Daily close and MM recon wrap system-total query + insert in `DB::transaction` (`ExpenseController.php`)
+- **R5** — Removed server-computed money fields from `DailyCashClosing` / `MobileMoneyReconciliation` fillable (`DailyCashClosing.php`, `MobileMoneyReconciliation.php`)
+- **R6** — G13 dollar fields reject excess precision with `decimal:0,2` on FormRequests; truncation test added (`StoreExpenseRequest.php`, `StoreDailyCashClosingRequest.php`, `StoreMobileMoneyReconciliationRequest.php`, `StorePaymentPlanRequest.php`, `FinanceExtrasTest.php`)
+- **R7** — Dentist and receptionist 403 tests for MM recon, payment-plans, insurance-claims POSTs (`FinanceExtrasTest.php`)
+- **R8** — Duplicate daily close returns validation error; unique violation mapped to `closing_date` error; test added (`ExpenseController.php`, `FinanceExtrasTest.php`)
+
+### Deferred / wontfix
+
+- **R9–R11** — Low/Question findings left open for orchestrator backlog / product confirmation.
+
+### Notes
+
+- Findings touched: R1–R8 fixed; R9–R11 unchanged (open)
+- Tests / checks run: `./vendor/bin/sail exec laravel.test vendor/bin/pint --dirty --format agent`; `PLAYWRIGHT_BROWSERS_PATH=0 ./vendor/bin/sail artisan test --compact tests/Feature/FinanceExtrasTest.php tests/Browser/ExpensesBrowserTest.php tests/Feature/BillingTest.php` — 48 passed
+
+## 2026-09-04 — G12 Inventory advanced (batch, expiry, PO) — correct pass
+
+### Fixed
+
+- **R1** — PO receive uses `lockForUpdate()` inside transaction and re-checks `isReceivable()` before mutating stock; repeat receive 403 test added (`InventoryStockService.php`, `InventoryTest.php`)
+- **R2** — `isExpired()` compares clinic calendar dates so expiry-day stock remains consumable through the day; feature test added (`InventoryBatch.php`, `InventoryTest.php`)
+- **R3** — AdjustmentIn/Out and initial stock route through batch-aware `adjustStockIn`/`adjustStockOut` (FEFO, expiry-aware); item qty tracks batch sum (`InventoryStockService.php`, `InventoryController.php`)
+- **R4** — `consumeFromBatch` validates and locks batch/item rows inside transaction before decrement (`InventoryStockService.php`)
+- **R5** — Feature tests for repeat PO receive 403, null-expiry receive rejection, and item–batch qty invariant after receive + consumption (`InventoryTest.php`)
+- **R6** — Initial stock and AdjustmentIn require expiry and create `InventoryBatch`; Vue create/adjust forms expose expiry fields (`StoreInventoryItemRequest.php`, `AdjustInventoryItemRequest.php`, `Index.vue`)
+- **R7** — PO receive rejects lines without expiry; `StorePurchaseOrderRequest` requires expiry on create (`InventoryStockService.php`, `StorePurchaseOrderRequest.php`)
+
+### Deferred / wontfix
+
+- **R8–R10** — Low findings left open for orchestrator backlog / atomic-close docs sync.
+
+### Notes
+
+- Findings touched: R1–R7 fixed; R8–R10 unchanged (open)
+- Tests / checks run: `./vendor/bin/sail exec laravel.test vendor/bin/pint --dirty --format agent`; `./vendor/bin/sail npm run build`; `PLAYWRIGHT_BROWSERS_PATH=0 ./vendor/bin/sail artisan test --compact tests/Feature/InventoryTest.php tests/Browser/InventoryTest.php` — 24 passed
+
+## 2026-09-04 — G10 Dental chart, encounters, sign-off — correct pass
+
+### Fixed
+
+- **R1** — Browser test: receptionist direct chart/encounter URL visits hide write UI; PATCH/POST write attempts return 403 with unchanged DB (`tests/Browser/EncounterTest.php`)
+- **R2** — Treatment plan item acceptance select on create + PATCH `updateItem` with policy; Vue status update form per item (`TreatmentPlanController.php`, `UpdateTreatmentPlanItemRequest.php`, `PatientChart.vue`, `routes/web.php`)
+- **R3** — Removed `signed_at`/`signed_by` from `SoapNote` fillable; added `SoapNote::sign(User)`; `EncounterController::sign` uses it; regression test PATCH body cannot forge signature (`SoapNote.php`, `EncounterController.php`, `EncounterTest.php`)
+- **R4** — Feature tests: receptionist GET chart/encounter 403, nurse chart read-only, plan+item+acceptance happy path (`EncounterTest.php`)
+- **R5** — Optional validated `encounter_id` on odontogram update; auto-link latest unsigned encounter; tooth history linkage tests (`UpdateOdontogramRequest.php`, `PatientChartController.php`, `EncounterTest.php`)
+
+### Deferred / wontfix
+
+- **R6–R8** — Low findings left open for orchestrator backlog.
+- **R9** — Question (encounter-dentist ownership) left open; no policy change.
+
+### Notes
+
+- Findings touched: R1–R5 fixed; R6–R9 unchanged (open)
+- Tests / checks run: `./vendor/bin/sail exec laravel.test vendor/bin/pint --dirty --format agent`; `./vendor/bin/sail npm run build`; `PLAYWRIGHT_BROWSERS_PATH=0 ./vendor/bin/sail artisan test --compact tests/Feature/EncounterTest.php tests/Browser/EncounterTest.php tests/Browser/NavigationTest.php` — 22 passed
+
 ## 2026-09-03 — G5 Billing and payments — correct pass
 
 ### Fixed

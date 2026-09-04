@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { index as billingIndex, show as billingShow } from '@/routes/billing';
+import { index as billingIndex } from '@/routes/billing';
 import { show as billingReceiptShow } from '@/routes/billing/receipts';
 
 type InvoiceItem = {
@@ -133,7 +133,7 @@ defineOptions({
     layout: {
         breadcrumbs: [
             { title: 'Billing', href: billingIndex() },
-            { title: 'Invoice', href: billingShow(props.invoice.id) },
+            { title: 'Invoice', href: billingIndex() },
         ],
     },
 });
@@ -265,7 +265,7 @@ defineOptions({
         </section>
 
         <div v-if="canPay && invoice.balance_cents > 0" class="flex gap-2">
-            <Button @click="showPayForm = !showPayForm">
+            <Button @click="showPayForm = !showPayForm" data-test="record-payment-button">
                 {{ showPayForm ? 'Hide payment form' : 'Record payment' }}
             </Button>
         </div>
@@ -378,7 +378,7 @@ defineOptions({
                         </div>
                     </template>
 
-                    <Button type="submit" :disabled="processing">
+                    <Button type="submit" :disabled="processing" data-test="submit-payment-button">
                         Submit payment
                     </Button>
                 </Form>

@@ -86,6 +86,11 @@ class Treatment extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    public function encounter(): HasOne
+    {
+        return $this->hasOne(Encounter::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

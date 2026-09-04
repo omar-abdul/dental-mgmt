@@ -6,11 +6,12 @@ use App\Enums\InventoryCategory;
 use App\Enums\InventoryMovementType;
 use App\Http\Requests\AdjustInventoryItemRequest;
 use App\Http\Requests\StoreInventoryItemRequest;
+use App\Models\InventoryBatch;
 use App\Models\InventoryItem;
-use App\Models\InventoryMovement;
+use App\Services\InventoryStockService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -40,10 +41,36 @@ class InventoryController extends Controller
             fn (InventoryItem $item): int => $item->quantity * $item->unit_cost_cents,
         );
 
+        $expiryAlerts = InventoryBatch::query()
+            ->with('inventoryItem')
+            ->where('quantity', '>', 0)
+            ->whereDate('expiry_date', '<=', now()->addDays(30))
+            ->orderBy('expiry_date')
+            ->limit(10)
+            ->get()
+            ->map(fn (InventoryBatch $batch) => [
+                'id' => $batch->id,
+                'inventory_item_id' => $batch->inventory_item_id,
+                'item_name' => $batch->inventoryItem->name,
+                'batch_number' => $batch->batch_number,
+                'quantity' => $batch->quantity,
+                'expiry_date' => $batch->expiry_date->toDateString(),
+                'expiry_date_formatted' => $batch->expiry_date->format('M j, Y'),
+                'is_expired' => $batch->isExpired(),
+            ])
+            ->values()
+            ->all();
+
+        $expiringSoonCount = InventoryBatch::query()
+            ->where('quantity', '>', 0)
+            ->whereDate('expiry_date', '<=', now()->addDays(30))
+            ->count();
+
         $items = $itemsQuery
+            ->with(['batches' => fn ($query) => $query->where('quantity', '>', 0)->orderBy('expiry_date')])
             ->paginate(15)
             ->withQueryString()
-            ->through(fn (InventoryItem $item) => $this->inventoryListItem($item));
+            ->through(fn (InventoryItem $item) => $this->inventoryListItem($item, $request));
 
         return Inertia::render('inventory/Index', [
             'items' => $items,
@@ -54,87 +81,89 @@ class InventoryController extends Controller
                 'out_of_stock' => $allItems->where('quantity', 0)->count(),
                 'stock_value_cents' => $stockValueCents,
                 'stock_value_formatted' => $this->formatCents($stockValueCents),
+                'expiring_soon' => $expiringSoonCount,
             ],
+            'expiryAlerts' => $expiryAlerts,
             'categories' => $this->categoryOptions(),
             'movementTypes' => $this->movementTypeOptions(),
             'canCreate' => $request->user()?->can('create', InventoryItem::class) ?? false,
-            'canAdjust' => $request->user()?->can('create', InventoryItem::class) ?? false,
+            'canAdjust' => $request->user()?->can('adjustStock', InventoryItem::class) ?? false,
         ]);
     }
 
-    public function store(StoreInventoryItemRequest $request): RedirectResponse
+    public function store(StoreInventoryItemRequest $request, InventoryStockService $stockService): RedirectResponse
     {
-        DB::transaction(function () use ($request): void {
-            $userId = $request->user()?->id;
-            $quantity = $request->integer('quantity');
+        $user = $request->user();
+        $userId = $user?->id;
+        $quantity = $request->integer('quantity');
 
-            $item = InventoryItem::query()->create([
-                'name' => $request->string('name')->trim()->value(),
-                'category' => $request->enum('category', InventoryCategory::class),
-                'quantity' => $quantity,
-                'unit' => $request->string('unit')->trim()->value(),
-                'reorder_level' => $request->integer('reorder_level'),
-                'unit_cost_cents' => $this->dollarsToCents($request->float('unit_cost')),
-                'created_by' => $userId,
-                'updated_by' => $userId,
-            ]);
+        $item = InventoryItem::query()->create([
+            'name' => $request->string('name')->trim()->value(),
+            'category' => $request->enum('category', InventoryCategory::class),
+            'quantity' => 0,
+            'unit' => $request->string('unit')->trim()->value(),
+            'reorder_level' => $request->integer('reorder_level'),
+            'unit_cost_cents' => $this->dollarsToCents($request->float('unit_cost')),
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ]);
 
-            if ($quantity > 0) {
-                InventoryMovement::query()->create([
-                    'inventory_item_id' => $item->id,
-                    'delta' => $quantity,
-                    'type' => InventoryMovementType::AdjustmentIn,
-                    'user_id' => $userId,
-                    'reason' => __('Initial stock'),
-                    'created_by' => $userId,
-                    'updated_by' => $userId,
-                ]);
-            }
-        });
+        if ($quantity > 0) {
+            $stockService->adjustStockIn(
+                $item,
+                $quantity,
+                $user,
+                Carbon::parse($request->string('expiry_date')->value()),
+                $request->string('batch_number')->toString() ?: null,
+                __('Initial stock'),
+            );
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Inventory item created.')]);
 
         return to_route('inventory.index');
     }
 
-    public function adjust(AdjustInventoryItemRequest $request, InventoryItem $inventoryItem): RedirectResponse
-    {
+    public function adjust(
+        AdjustInventoryItemRequest $request,
+        InventoryItem $inventoryItem,
+        InventoryStockService $stockService,
+    ): RedirectResponse {
         Gate::authorize('adjust', $inventoryItem);
 
-        DB::transaction(function () use ($request, $inventoryItem): void {
-            $userId = $request->user()?->id;
-            $quantity = $request->integer('quantity');
-            $type = $request->enum('type', InventoryMovementType::class);
+        $type = $request->enum('type', InventoryMovementType::class);
 
-            $delta = match ($type) {
-                InventoryMovementType::AdjustmentIn => $quantity,
-                InventoryMovementType::AdjustmentOut,
-                InventoryMovementType::Consumption => -$quantity,
-            };
-
-            $newQuantity = $inventoryItem->quantity + $delta;
-
-            if ($newQuantity < 0) {
-                throw ValidationException::withMessages([
-                    'quantity' => __('Insufficient stock for this adjustment.'),
-                ]);
-            }
-
-            $inventoryItem->update([
-                'quantity' => $newQuantity,
-                'updated_by' => $userId,
+        if ($type === InventoryMovementType::Consumption) {
+            $batch = InventoryBatch::query()->findOrFail($request->integer('inventory_batch_id'));
+            $stockService->consumeFromBatch(
+                $inventoryItem,
+                $batch,
+                $request->integer('quantity'),
+                $request->user(),
+                $request->string('reason')->toString() ?: null,
+            );
+        } elseif ($type === InventoryMovementType::AdjustmentIn) {
+            $stockService->adjustStockIn(
+                $inventoryItem,
+                $request->integer('quantity'),
+                $request->user(),
+                Carbon::parse($request->string('expiry_date')->value()),
+                $request->string('batch_number')->toString() ?: null,
+                $request->string('reason')->toString() ?: null,
+            );
+        } elseif ($type === InventoryMovementType::AdjustmentOut) {
+            $stockService->adjustStockOut(
+                $inventoryItem,
+                $request->integer('quantity'),
+                $request->user(),
+                $request->integer('inventory_batch_id') ?: null,
+                $request->string('reason')->toString() ?: null,
+            );
+        } else {
+            throw ValidationException::withMessages([
+                'type' => __('Invalid adjustment type.'),
             ]);
-
-            InventoryMovement::query()->create([
-                'inventory_item_id' => $inventoryItem->id,
-                'delta' => $delta,
-                'type' => $type,
-                'user_id' => $userId,
-                'reason' => $request->string('reason')->toString() ?: null,
-                'created_by' => $userId,
-                'updated_by' => $userId,
-            ]);
-        });
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Stock adjusted.')]);
 
@@ -144,9 +173,9 @@ class InventoryController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function inventoryListItem(InventoryItem $item): array
+    private function inventoryListItem(InventoryItem $item, Request $request): array
     {
-        return [
+        $data = [
             'id' => $item->id,
             'name' => $item->name,
             'category' => $item->category->value,
@@ -159,6 +188,19 @@ class InventoryController extends Controller
             'stock_status' => $item->stockStatus()->value,
             'stock_status_label' => $item->stockStatus()->label(),
         ];
+
+        if ($request->user()?->can('adjust', $item) ?? false) {
+            $data['batches'] = $item->batches->map(fn (InventoryBatch $batch) => [
+                'id' => $batch->id,
+                'batch_number' => $batch->batch_number,
+                'quantity' => $batch->quantity,
+                'expiry_date' => $batch->expiry_date->toDateString(),
+                'expiry_date_formatted' => $batch->expiry_date->format('M j, Y'),
+                'is_expired' => $batch->isExpired(),
+            ])->values()->all();
+        }
+
+        return $data;
     }
 
     /**
@@ -180,13 +222,19 @@ class InventoryController extends Controller
      */
     private function movementTypeOptions(): array
     {
-        return collect(InventoryMovementType::cases())
+        return collect([
+            InventoryMovementType::AdjustmentIn,
+            InventoryMovementType::AdjustmentOut,
+            InventoryMovementType::Consumption,
+        ])
             ->map(fn (InventoryMovementType $type) => [
                 'value' => $type->value,
                 'label' => match ($type) {
                     InventoryMovementType::AdjustmentIn => 'Stock in',
                     InventoryMovementType::AdjustmentOut => 'Stock out',
                     InventoryMovementType::Consumption => 'Consumption',
+                    InventoryMovementType::Purchase => 'Purchase',
+                    InventoryMovementType::Expired => 'Expired',
                 },
             ])
             ->values()

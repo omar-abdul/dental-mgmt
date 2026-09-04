@@ -19,6 +19,78 @@
 
 > Not in-flight work. Do not copy these into root `progress.md`.
 
+### B26 — Pest browser multipart file uploads (G15)
+- Related findings: —
+- Status: deferred
+- What's left: `pestphp/pest-plugin-browser` LaravelHttpServer passes `[]` for files and only parses `application/x-www-form-urlencoded` (`@TODO files`). Attaching a file in Playwright sends empty multipart, so Laravel sees no fields. Re-enable browser `attach()` for imaging when the plugin parses multipart/`$_FILES`.
+- Why: Low
+- Expires: 2026-10-05
+- Updated: 2026-09-05
+
+### B24 — Payment plans/insurance claims HTTP-only (G13 R9)
+- Related findings: R9
+- Status: deferred
+- What's left: No Vue forms on billing show for plans/claims
+- Why: Low
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
+### B25 — Cash close closing_date any-date API (G13 R11)
+- Related findings: R11
+- Status: deferred
+- What's left: Confirm same-day-only vs backfill; server rule if needed
+- Why: Question
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
+### B22 — Expired write-down movement unused (G12 R8)
+- Related findings: R8
+- Status: deferred
+- What's left: `InventoryMovementType::Expired` is never written; add admin expired write-off that decrements batch + item
+- Why: Low
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
+### B23 — Expired batches selectable in consume UI (G12 R9)
+- Related findings: R9
+- Status: deferred
+- What's left: Disable or hide expired options in inventory consumption `<select>` (server already rejects)
+- Why: Low
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
+### B17 — Weekly Fri KPI on Friday seed days (G9)
+- Related findings: —
+- Status: deferred
+- What's left: `golden-smile.example.json` `weekly_visits.fri` is 0 (clinic closed). Generate puts 18 appointments on “today”, so seeding on Friday yields `weekly.fri = 18`. Align generate to other weekdays when today is Friday, or document screenshot-day assumption.
+- Why: Low
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
+### B18 — Plan item tooth_fdi FDI allow-list (G10 R6)
+- Related findings: R6
+- Status: deferred
+- What's left: Reuse odontogram FDI allow-list on `StoreTreatmentPlanItemRequest` `tooth_fdi` (currently `max:2` only)
+- Why: Low
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
+### B19 — Triplicated clinical role matrices (G10 R7)
+- Related findings: R7
+- Status: deferred
+- What's left: Extract shared VIEW/WRITE role lists from ChartPolicy, EncounterPolicy, TreatmentPlanPolicy
+- Why: Low
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
+### B21 — Encounter dentist ownership (G10 R9)
+- Related findings: R9
+- Status: deferred
+- What's left: Confirm whether encounter SOAP/sign/amend should require matching dentist (Admin override) vs any Admin/Dentist covering
+- Why: Question
+- Expires: 2026-10-04
+- Updated: 2026-09-04
+
 ### B1 — Billing screenshot (Figure 7)
 - Related findings: —
 - Status: deferred

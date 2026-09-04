@@ -113,6 +113,27 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Test the changed behavior and its important failure modes, but do not add tests beyond them.
 - Read the `testing-best-practices` skill before writing tests.
 
+=== browser tests ===
+
+# Front-to-back browser tests
+
+Every user-facing feature (new or changed) needs Pest Playwright tests in `tests/Browser`, not only HTTP feature tests.
+
+A browser test must:
+
+1. Drive the UI as staff would (click, fill, submit, navigate). Prefer `data-test` selectors (`click('@save-patient-button')`).
+2. Assert the visible result (heading, row, badge, empty state, validation message, or next page).
+3. Assert the backend result (database row, status, audit, receipt number, or other persisted effect).
+
+HTTP feature tests still own 403 matrices, validation rules, and overlap/money edge cases.
+
+Do not mark a UI G-id done without a passing browser happy path. Run
+`./vendor/bin/sail artisan test --compact tests/Browser` after `./vendor/bin/sail npm run build`.
+Playwright Chromium: `PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium`.
+Browser tests use the Vite production build (`public/build`); they remove a stale `public/hot` file so the suite does not hang on a stopped `npm run dev` server.
+
+Approved packages: `pestphp/pest-plugin-browser`, npm `playwright`.
+
 === inertia-laravel/core rules ===
 
 # Inertia

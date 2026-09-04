@@ -8,11 +8,13 @@ use App\Http\Requests\StoreTreatmentRequest;
 use App\Models\Appointment;
 use App\Models\Dentist;
 use App\Models\FeeItem;
+use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\Treatment;
 use App\Models\TreatmentProcedure;
+use App\Services\EncounterCreator;
 use App\Services\PrescriptionNumberGenerator;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
@@ -88,6 +90,7 @@ class TreatmentController extends Controller
     public function store(
         StoreTreatmentRequest $request,
         PrescriptionNumberGenerator $numberGenerator,
+        EncounterCreator $encounterCreator,
     ): RedirectResponse {
         $status = $request->enum('status', TreatmentStatus::class) ?? TreatmentStatus::Planned;
         $diagnosedAt = $request->date('diagnosed_at') ?? now();
@@ -98,7 +101,7 @@ class TreatmentController extends Controller
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
-                $treatment = DB::transaction(function () use ($validated, $numberGenerator, $status, $diagnosedAt, $userId): Treatment {
+                $treatment = DB::transaction(function () use ($validated, $numberGenerator, $encounterCreator, $status, $diagnosedAt, $userId): Treatment {
                     $treatment = Treatment::query()->create([
                         'patient_id' => $validated['patient_id'],
                         'dentist_id' => $validated['dentist_id'],
@@ -151,6 +154,7 @@ class TreatmentController extends Controller
 
                     if ($status === TreatmentStatus::Completed) {
                         $this->completeLinkedAppointment($treatment, $userId);
+                        $encounterCreator->createForCompletedTreatment($treatment, $userId);
                     }
 
                     return $treatment;
@@ -180,19 +184,29 @@ class TreatmentController extends Controller
             'procedures.feeItem',
             'prescription.items',
             'prescription.prescriber',
+            'invoice',
+            'encounter',
         ]);
+
+        $user = $request->user();
 
         return Inertia::render('treatments/Show', [
             'treatment' => $this->treatmentDetail($treatment),
-            'canComplete' => $request->user()?->can('complete', $treatment) ?? false,
+            'canComplete' => $user?->can('complete', $treatment) ?? false,
+            'canGenerateInvoice' => $treatment->status === TreatmentStatus::Completed
+                && $treatment->invoice === null
+                && ($user?->can('generate', Invoice::class) ?? false),
         ]);
     }
 
-    public function complete(Request $request, Treatment $treatment): RedirectResponse
-    {
+    public function complete(
+        Request $request,
+        Treatment $treatment,
+        EncounterCreator $encounterCreator,
+    ): RedirectResponse {
         Gate::authorize('complete', $treatment);
 
-        DB::transaction(function () use ($request, $treatment): void {
+        DB::transaction(function () use ($request, $treatment, $encounterCreator): void {
             $userId = $request->user()?->id;
 
             $treatment->update([
@@ -201,6 +215,7 @@ class TreatmentController extends Controller
             ]);
 
             $this->completeLinkedAppointment($treatment, $userId);
+            $encounterCreator->createForCompletedTreatment($treatment, $userId);
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Treatment completed.')]);
@@ -292,6 +307,10 @@ class TreatmentController extends Controller
                     'dosage' => $item->dosage,
                     'instructions' => $item->instructions,
                 ])->values(),
+            ] : null,
+            'encounter' => $treatment->encounter ? [
+                'id' => $treatment->encounter->id,
+                'number' => $treatment->encounter->number,
             ] : null,
         ];
     }

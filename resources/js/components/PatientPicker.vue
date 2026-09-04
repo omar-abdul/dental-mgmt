@@ -228,6 +228,7 @@ onBeforeUnmount(() => {
                 aria-autocomplete="list"
                 :aria-controls="`${inputId}_results`"
                 placeholder="Type to search patients"
+                data-test="patient-picker-search"
                 @update:model-value="onInput"
                 @keydown="onKeydown"
                 @focus="isOpen = results.length > 0"
@@ -248,6 +249,7 @@ onBeforeUnmount(() => {
                     class="hover:bg-accent focus:bg-accent flex w-full flex-col items-start px-3 py-2 text-left text-sm"
                     :class="{ 'bg-accent': index === highlightedIndex }"
                     @mousedown.prevent="selectPatient(patient)"
+                    data-test="patient-picker-option"
                 >
                     <span class="font-medium">{{ patient.full_name }}</span>
                     <span class="text-muted-foreground text-xs">

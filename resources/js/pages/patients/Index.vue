@@ -52,7 +52,7 @@ defineOptions({
             />
 
             <Button v-if="canCreate" as-child>
-                <Link :href="patientsCreate()">Register patient</Link>
+                <Link :href="patientsCreate()" data-test="register-patient-link">Register patient</Link>
             </Button>
         </div>
 
@@ -62,8 +62,9 @@ defineOptions({
                 :default-value="search"
                 placeholder="Search by name, number, phone, or email"
                 class="max-w-md"
+                data-test="patient-search-input"
             />
-            <Button type="submit" variant="secondary">Search</Button>
+            <Button type="submit" variant="secondary" data-test="patient-search-button">Search</Button>
         </form>
 
         <div class="divide-border overflow-hidden rounded-md border">

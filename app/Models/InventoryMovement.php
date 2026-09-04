@@ -13,6 +13,8 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $inventory_item_id
+ * @property int|null $inventory_batch_id
+ * @property int|null $purchase_order_id
  * @property int $delta
  * @property InventoryMovementType $type
  * @property int $user_id
@@ -26,6 +28,8 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable([
     'inventory_item_id',
+    'inventory_batch_id',
+    'purchase_order_id',
     'delta',
     'type',
     'user_id',
@@ -52,6 +56,16 @@ class InventoryMovement extends Model
     public function inventoryItem(): BelongsTo
     {
         return $this->belongsTo(InventoryItem::class);
+    }
+
+    public function inventoryBatch(): BelongsTo
+    {
+        return $this->belongsTo(InventoryBatch::class);
+    }
+
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
     }
 
     public function user(): BelongsTo

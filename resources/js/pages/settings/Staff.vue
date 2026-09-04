@@ -115,7 +115,7 @@ defineOptions({
                 />
             </div>
 
-            <Button type="submit" :disabled="processing">
+            <Button type="submit" :disabled="processing" data-test="create-staff-button">
                 Create staff member
             </Button>
         </Form>

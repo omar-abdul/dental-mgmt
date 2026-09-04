@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\NotificationTemplateController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\Settings\StaffController;
@@ -26,4 +27,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/staff', [StaffController::class, 'index'])->name('staff.index');
     Route::get('settings/staff/create', [StaffController::class, 'create'])->name('staff.create');
     Route::post('settings/staff', [StaffController::class, 'store'])->name('staff.store');
+
+    Route::get('settings/notification-templates', [NotificationTemplateController::class, 'index'])
+        ->name('notification-templates.index');
+    Route::patch('settings/notification-templates/{communicationTemplate}', [NotificationTemplateController::class, 'update'])
+        ->name('notification-templates.update');
 });

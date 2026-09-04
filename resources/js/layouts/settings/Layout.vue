@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
+import { index as notificationTemplatesIndex } from '@/routes/notification-templates';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import { index as staffIndex } from '@/routes/staff';
@@ -23,6 +24,10 @@ const sidebarNavItems = computed<NavItem[]>(() => {
 
     if (isAdmin.value) {
         items.push({ title: 'Staff', href: staffIndex() });
+        items.push({
+            title: 'Notifications',
+            href: notificationTemplatesIndex(),
+        });
     }
 
     items.push({ title: 'Appearance', href: editAppearance() });

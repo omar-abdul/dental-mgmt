@@ -154,7 +154,7 @@ defineOptions({
             </div>
 
             <div class="flex gap-3">
-                <Button type="submit" :disabled="processing">
+                <Button type="submit" :disabled="processing" data-test="save-patient-button">
                     Save patient
                 </Button>
                 <Button

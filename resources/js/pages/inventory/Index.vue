@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import InventoryController from '@/actions/App/Http/Controllers/InventoryController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -23,6 +23,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { index as inventoryIndex } from '@/routes/inventory';
+import { index as purchaseOrdersIndex } from '@/routes/inventory/purchase-orders';
+import { index as suppliersIndex } from '@/routes/inventory/suppliers';
+
+type InventoryBatch = {
+    id: number;
+    batch_number: string;
+    quantity: number;
+    expiry_date: string;
+    expiry_date_formatted: string;
+    is_expired: boolean;
+};
 
 type InventoryListItem = {
     id: number;
@@ -36,6 +47,18 @@ type InventoryListItem = {
     unit_cost_formatted: string;
     stock_status: 'out' | 'low' | 'in_stock';
     stock_status_label: string;
+    batches?: InventoryBatch[];
+};
+
+type ExpiryAlert = {
+    id: number;
+    inventory_item_id: number;
+    item_name: string;
+    batch_number: string;
+    quantity: number;
+    expiry_date: string;
+    expiry_date_formatted: string;
+    is_expired: boolean;
 };
 
 type PaginatedItems = {
@@ -49,6 +72,7 @@ type Stats = {
     out_of_stock: number;
     stock_value_cents: number;
     stock_value_formatted: string;
+    expiring_soon: number;
 };
 
 type Option = {
@@ -60,6 +84,7 @@ const props = defineProps<{
     items: PaginatedItems;
     search: string;
     stats: Stats;
+    expiryAlerts: ExpiryAlert[];
     categories: Option[];
     movementTypes: Option[];
     canCreate: boolean;
@@ -69,15 +94,30 @@ const props = defineProps<{
 const showCreateDialog = ref(false);
 const showAdjustDialog = ref(false);
 const adjustingItem = ref<InventoryListItem | null>(null);
+const selectedAdjustmentType = ref('adjustment_in');
+const selectedBatchId = ref('');
+
+const isConsumption = computed(
+    () => selectedAdjustmentType.value === 'consumption',
+);
+
+const isAdjustmentIn = computed(
+    () => selectedAdjustmentType.value === 'adjustment_in',
+);
+
+const availableBatches = computed(() => adjustingItem.value?.batches ?? []);
 
 function openAdjustDialog(item: InventoryListItem): void {
     adjustingItem.value = item;
+    selectedAdjustmentType.value = 'adjustment_in';
+    selectedBatchId.value = '';
     showAdjustDialog.value = true;
 }
 
 function closeAdjustDialog(): void {
     showAdjustDialog.value = false;
     adjustingItem.value = null;
+    selectedBatchId.value = '';
 }
 
 function stockBadgeVariant(
@@ -117,9 +157,21 @@ defineOptions({
                 description="Track clinic stock levels and adjustments"
             />
 
-            <Button v-if="canCreate" @click="showCreateDialog = true">
-                Add item
-            </Button>
+            <div class="flex flex-wrap gap-2">
+                <Button v-if="canCreate" data-test="add-inventory-button" @click="showCreateDialog = true">
+                    Add item
+                </Button>
+                <Button v-if="canCreate" variant="outline" as-child>
+                    <Link :href="purchaseOrdersIndex()" data-test="purchase-orders-link">
+                        Purchase orders
+                    </Link>
+                </Button>
+                <Button v-if="canCreate" variant="outline" as-child>
+                    <Link :href="suppliersIndex()" data-test="suppliers-link">
+                        Suppliers
+                    </Link>
+                </Button>
+            </div>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -170,14 +222,43 @@ defineOptions({
             </Card>
         </div>
 
+        <div
+            v-if="expiryAlerts.length > 0"
+            class="border-destructive/30 bg-destructive/5 space-y-3 rounded-md border p-4"
+            data-test="expiry-alerts-panel"
+        >
+            <h3 class="text-sm font-medium">
+                Expiry alerts
+                <span class="text-muted-foreground font-normal">({{ stats.expiring_soon }})</span>
+            </h3>
+            <ul class="space-y-2 text-sm">
+                <li
+                    v-for="alert in expiryAlerts"
+                    :key="alert.id"
+                    class="flex flex-wrap items-center gap-2"
+                    data-test="expiry-alert-item"
+                >
+                    <Badge :variant="alert.is_expired ? 'destructive' : 'outline'">
+                        {{ alert.is_expired ? 'Expired' : 'Expiring soon' }}
+                    </Badge>
+                    <span class="font-medium">{{ alert.item_name }}</span>
+                    <span class="text-muted-foreground">
+                        Batch {{ alert.batch_number }} · {{ alert.quantity }} units ·
+                        {{ alert.expiry_date_formatted }}
+                    </span>
+                </li>
+            </ul>
+        </div>
+
         <form :action="inventoryIndex().url" method="get" class="flex gap-2">
             <Input
                 name="search"
                 :default-value="search"
                 placeholder="Search by name"
                 class="max-w-md"
+                data-test="inventory-search-input"
             />
-            <Button type="submit" variant="secondary">Search</Button>
+            <Button type="submit" variant="secondary" data-test="inventory-search-button">Search</Button>
         </form>
 
         <div class="divide-border overflow-hidden rounded-md border">
@@ -223,6 +304,7 @@ defineOptions({
                                 variant="outline"
                                 size="sm"
                                 @click="openAdjustDialog(item)"
+                                data-test="adjust-inventory-button"
                             >
                                 Adjust
                             </Button>
@@ -343,6 +425,25 @@ defineOptions({
                     </div>
                 </div>
 
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="grid gap-2">
+                        <Label for="expiry_date">Expiry date</Label>
+                        <Input
+                            id="expiry_date"
+                            name="expiry_date"
+                            type="date"
+                            data-test="create-expiry-date-input"
+                        />
+                        <InputError :message="errors.expiry_date" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="batch_number">Batch number (optional)</Label>
+                        <Input id="batch_number" name="batch_number" />
+                        <InputError :message="errors.batch_number" />
+                    </div>
+                </div>
+
                 <DialogFooter>
                     <Button
                         type="button"
@@ -351,7 +452,7 @@ defineOptions({
                     >
                         Cancel
                     </Button>
-                    <Button type="submit" :disabled="processing">
+                    <Button type="submit" :disabled="processing" data-test="create-inventory-button">
                         Create item
                     </Button>
                 </DialogFooter>
@@ -391,6 +492,7 @@ defineOptions({
                     <select
                         id="type"
                         name="type"
+                        v-model="selectedAdjustmentType"
                         required
                         class="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs"
                     >
@@ -403,6 +505,48 @@ defineOptions({
                         </option>
                     </select>
                     <InputError :message="errors.type" />
+                </div>
+
+                <div v-if="isConsumption" class="grid gap-2">
+                    <Label for="inventory_batch_id">Batch</Label>
+                    <select
+                        id="inventory_batch_id"
+                        name="inventory_batch_id"
+                        v-model="selectedBatchId"
+                        required
+                        class="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs"
+                        data-test="consumption-batch-select"
+                    >
+                        <option value="" disabled selected>Select batch</option>
+                        <option
+                            v-for="batch in availableBatches"
+                            :key="batch.id"
+                            :value="batch.id"
+                        >
+                            {{ batch.batch_number }} — {{ batch.quantity }} left — expires
+                            {{ batch.expiry_date_formatted }}
+                            {{ batch.is_expired ? '(expired)' : '' }}
+                        </option>
+                    </select>
+                    <InputError :message="errors.inventory_batch_id" />
+                </div>
+
+                <div v-if="isAdjustmentIn" class="grid gap-2">
+                    <Label for="adjust_expiry_date">Expiry date</Label>
+                    <Input
+                        id="adjust_expiry_date"
+                        name="expiry_date"
+                        type="date"
+                        required
+                        data-test="adjust-expiry-date-input"
+                    />
+                    <InputError :message="errors.expiry_date" />
+                </div>
+
+                <div v-if="isAdjustmentIn" class="grid gap-2">
+                    <Label for="adjust_batch_number">Batch number (optional)</Label>
+                    <Input id="adjust_batch_number" name="batch_number" />
+                    <InputError :message="errors.batch_number" />
                 </div>
 
                 <div class="grid gap-2">
@@ -428,7 +572,7 @@ defineOptions({
                     <Button type="button" variant="outline" @click="closeAdjustDialog">
                         Cancel
                     </Button>
-                    <Button type="submit" :disabled="processing">
+                    <Button type="submit" :disabled="processing" data-test="save-adjustment-button">
                         Save adjustment
                     </Button>
                 </DialogFooter>

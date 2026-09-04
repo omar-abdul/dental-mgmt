@@ -2,6 +2,79 @@
 
 Completed architecture goals (G0–G15) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
 
+## 2026-09-05 — G15 Imaging orders (metadata)
+
+Imaging orders (`IMG-…`) with optional result findings/impression and an optional file on the Laravel `local` disk. Admin/Dentist write; Nurse may view; Receptionist is 403. Imaging nav for authorized roles. No DICOM viewer or new npm packages.
+
+- **Verified:** Orchestrator ran `./vendor/bin/sail artisan test --compact tests/Feature/ImagingOrderTest.php tests/Browser/ImagingOrderTest.php tests/Browser/NavigationTest.php` — 20 passed. File persistence is covered in the feature test (`Storage::fake`); Pest’s in-process browser server does not parse multipart bodies (`@TODO files`), so the browser happy path submits metadata without attaching.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none (architecture G0–G15 complete)
+
+## 2026-09-04 — G14 Notification templates (no live SMS)
+
+Seeded DCMS communication templates (APT-REMINDER, APT-CONFIRM, PAYMENT-RECEIPT). Admin edits them under Settings → Notifications. Hourly `appointments:queue-reminders` writes idempotent `notification.would_send` audit rows at 48/24/2 hours. No SMS HTTP.
+
+- **Verified:** Orchestrator re-ran `./vendor/bin/sail artisan test --compact tests/Feature/NotificationTemplateTest.php tests/Browser/NotificationTemplateTest.php` — 12 passed.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G15 (imaging orders)
+
+## 2026-09-04 — G13 Finance extras
+
+Accountant/Admin expenses, daily cash closing, payment plans with cumulative allocation caps, insurance claim stubs, and mobile-money daily reconciliation (system vs provider totals, refund-aware). Dentist is 403. Expenses nav for authorized roles.
+
+- **Verified:** Orchestrator re-ran `./vendor/bin/sail artisan test --compact tests/Feature/FinanceExtrasTest.php tests/Browser/ExpensesBrowserTest.php tests/Feature/BillingTest.php` — 48 passed after Corrector (R1–R8). Verifier confirmed R1–R8 in code; no open Critical/High.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G14 (notification templates)
+
+## 2026-09-04 — G12 Inventory advanced (batch, expiry, PO)
+
+Inventory items have batches with expiry; expired stock cannot be consumed. Suppliers and purchase orders (`PO-…`) receive into batches and increase quantity. Stock adjustments are Admin-only. Low-stock and expiry alerts on the inventory index.
+
+- **Verified:** Orchestrator re-ran `./vendor/bin/sail artisan test --compact tests/Feature/InventoryTest.php tests/Browser/InventoryTest.php` — 24 passed after Corrector (R1–R7). Verifier confirmed R1–R7 in code; no open Critical/High.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G13 (finance extras)
+
+## 2026-09-04 — G11 Laboratory orders
+
+Lab staff, Dentist, and Admin CRUD lab orders (`LAB-…`) with DCMS statuses (ordered through fitted/returned/cancelled). Lab module in the sidebar. Receptionist is 403. Lab work is not billed on the order.
+
+- **Verified:** Orchestrator re-ran `./vendor/bin/sail artisan test --compact tests/Feature/LabOrderTest.php tests/Browser/LabOrderTest.php tests/Browser/NavigationTest.php` — 22 passed.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G12 (inventory advanced: batch, expiry, PO)
+
+## 2026-09-04 — G10 Dental chart, encounters, sign-off
+
+Completed visits create `ENC-…` encounters with SOAP draft/sign. Signed notes cannot be silently edited; amendments are required. FDI odontogram (DCMS statuses/surfaces) with tooth history, treatment plans with item acceptance. Admin/Dentist write; Nurse view; Receptionist 403. Chart nav for authorized roles.
+
+- **Verified:** Orchestrator re-ran `./vendor/bin/sail artisan test --compact tests/Feature/EncounterTest.php tests/Browser/EncounterTest.php tests/Browser/NavigationTest.php` — 22 passed after Corrector (R1–R5). Verifier confirmed R1–R5 in code; no open Critical/High.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G11 (laboratory orders)
+
+## 2026-09-04 — G9 Demo seed and screenshot parity
+
+`db:seed` loads Golden Smile named staff, patients (Ahmed Ali `PAT-2026-00001`, Maria Santos), appointments, three SKUs, FEE catalog, and generate extras so dashboard KPIs match `golden-smile.example.json`. Pest uses `GoldenSmileNamedSeeder` only (no 1,284-patient insert). Demo login `a.santos@goldensmile.clinic` / `password12`.
+
+- **Verified:** Orchestrator re-ran `./vendor/bin/sail artisan test --compact tests/Feature/GoldenSmileSeederTest.php tests/Feature/DatabaseSeederTest.php tests/Browser/GoldenSmileLoginTest.php` — 11 passed. Implementer full suite 247 passed.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G10 (dental chart, encounters, sign-off)
+- **Note:** Weekly visits `fri: 0` matches the JSON when the seed day is not Friday; seeding on Friday puts today’s 18 appointments in the Friday bucket.
+
+## 2026-09-04 — G8 Reports (Wave 1 subset)
+
+Replaced the reports placeholder with a hub and seven read-only reports (daily appointments, patient registration, outstanding balances, payments with method breakdown, inventory stock, low stock, treatment statistics). Date-range filters use clinic timezone. Payment totals are completed payments in integer cents. Admin/Accountant see finance; Dentist stats are self-scoped; Lab has no finance.
+
+- **Verified:** Orchestrator re-ran `./vendor/bin/sail artisan test --compact tests/Feature/ReportsTest.php tests/Browser/ReportsTest.php tests/Browser/NavigationTest.php` — 24 passed. Implementer full suite 237 passed.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** G9 (demo seed)
+
+## 2026-09-04 — Pest Playwright browser tests (prerequisite before G8)
+
+Added `pestphp/pest-plugin-browser` and Playwright Chromium so staff UI can be tested click-to-database. Retroactive `tests/Browser` coverage for login, dashboard, patients, appointments, treatments, billing, inventory, staff, and role-scoped nav. Completed treatments now have a Generate invoice button. `AGENTS.md` and `architecture.md` require front-to-back browser tests for UI G-ids.
+
+- **Verified:** `./vendor/bin/sail artisan test --compact` — 215 passed (15 browser + G0–G7 HTTP suite). Playwright as the real-browser path.
+- **Packages:** `pestphp/pest-plugin-browser` (Composer dev), `playwright` (npm dev)
+- **Next implement:** G8 (reports)
+
 ## 2026-09-03 — G7 Dashboard
 
 Replaced the Overview placeholder with live KPIs (today’s appointments, active patients, unpaid/issued invoices, low-stock items), Mon–Sun weekly visits, a recent activity feed, and today’s upcoming table. Counts use clinic timezone. Lab sees a limited dashboard; Accountant sees unpaid invoices without clinical lists; Nurse does not see the unpaid-invoice card.

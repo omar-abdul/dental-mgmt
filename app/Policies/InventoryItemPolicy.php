@@ -44,6 +44,11 @@ class InventoryItemPolicy
 
     public function adjust(User $user, InventoryItem $inventoryItem): bool
     {
-        return $user->hasRole(...self::WRITE_ROLES);
+        return $this->adjustStock($user);
+    }
+
+    public function adjustStock(User $user): bool
+    {
+        return $user->hasRole(ClinicRole::Admin);
     }
 }

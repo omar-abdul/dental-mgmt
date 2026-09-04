@@ -82,7 +82,7 @@ defineOptions({
                     v-bind="PatientController.archive.form(patient.id)"
                     v-slot="{ processing }"
                 >
-                    <Button type="submit" variant="destructive" :disabled="processing">
+                    <Button type="submit" variant="destructive" :disabled="processing" data-test="archive-patient-button">
                         Archive
                     </Button>
                 </Form>

@@ -246,7 +246,7 @@ defineOptions({
                             :name="`procedures[${index - 1}][quantity]`"
                             type="number"
                             min="1"
-                            value="1"
+                            :default-value="1"
                             required
                         />
                         <InputError :message="errors[`procedures.${index - 1}.quantity`]" />
@@ -314,7 +314,7 @@ defineOptions({
             </section>
 
             <div class="flex gap-3">
-                <Button type="submit" :disabled="processing">Save treatment</Button>
+                <Button type="submit" :disabled="processing" data-test="save-treatment-button">Save treatment</Button>
                 <Button as-child variant="outline">
                     <Link :href="treatmentsIndex()">Cancel</Link>
                 </Button>

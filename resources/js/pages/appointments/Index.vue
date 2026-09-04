@@ -240,7 +240,7 @@ defineOptions({
                 description="Day calendar for booking and check-in"
             />
 
-            <Button v-if="canBook && !workingHours.is_closed" @click="showBookDialog = true">
+            <Button v-if="canBook && !workingHours.is_closed" data-test="book-appointment-button" @click="showBookDialog = true">
                 Book appointment
             </Button>
         </div>
@@ -386,6 +386,7 @@ defineOptions({
                                             type="submit"
                                             size="sm"
                                             :disabled="processing"
+                                            data-test="check-in-appointment-button"
                                         >
                                             Check in
                                         </Button>
@@ -539,7 +540,7 @@ defineOptions({
                     >
                         Close
                     </Button>
-                    <Button type="submit" :disabled="processing">Book</Button>
+                    <Button type="submit" :disabled="processing" data-test="book-appointment-submit">Book</Button>
                 </DialogFooter>
             </Form>
         </DialogContent>
