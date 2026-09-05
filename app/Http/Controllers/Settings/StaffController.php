@@ -8,6 +8,7 @@ use App\Http\Requests\Settings\StoreStaffRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -61,13 +62,27 @@ class StaffController extends Controller
 
     public function store(StoreStaffRequest $request): RedirectResponse
     {
-        User::query()->create([
-            'name' => $request->string('name')->value(),
-            'email' => $request->string('email')->value(),
-            'role' => $request->enum('role', ClinicRole::class),
-            'password' => $request->string('password')->value(),
-            'email_verified_at' => now(),
-        ]);
+        $role = $request->enum('role', ClinicRole::class);
+        $actorId = $request->user()?->id;
+
+        DB::transaction(function () use ($request, $role, $actorId): void {
+            $staff = User::query()->create([
+                'name' => $request->string('name')->value(),
+                'email' => $request->string('email')->value(),
+                'role' => $role,
+                'password' => $request->string('password')->value(),
+                'email_verified_at' => now(),
+            ]);
+
+            if ($role === ClinicRole::Dentist) {
+                $staff->dentist()->create([
+                    'display_name' => $staff->name,
+                    'is_active' => true,
+                    'created_by' => $actorId,
+                    'updated_by' => $actorId,
+                ]);
+            }
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Staff member created.')]);
 

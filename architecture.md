@@ -75,7 +75,7 @@ and the `playwright` npm package (staff UI E2E).
 
 - Single-clinic Fortify session (no `{current_team}` / teams)
 - Six `ClinicRole` values on `users.role`; public registration off
-- Admin-only staff create; password min 10; session 30 minutes
+- Admin-only staff create; password min 10; session 30 minutes; Dentist role also provisions an active `dentists` profile for calendar/dropdowns
 - Brand Golden Smile Dental Clinic; timezone `Africa/Mogadishu`
 - Split login + navy Wave 1 chrome with a live Reports hub (seven Wave 1 reports)
 - Wave 1 tables, models, factories; DCMS fee catalog + working hours seeded; integer cents
@@ -85,7 +85,7 @@ and the `playwright` npm package (staff UI E2E).
 - Billing: invoice from completed treatment; partial/overpay rules; recorded ZAAD/Sahal/eDahab/MyCash; receipts; Admin/Accountant refunds; Dentist view-only; expenses, daily cash close, payment plans, insurance claim stub, MM recon (Admin/Accountant)
 - Inventory: four cards, search, add, adjust (Admin confirmation); batches + expiry; PO receive; suppliers; expiry alerts; no negative qty; expired consume blocked
 - Dashboard: four role-scoped KPI cards, Mon–Sun weekly visits, recent activity, upcoming today; Lab limited
-- Browser tests (`tests/Browser`, Pest + Playwright): login, dashboard, patients, appointments, treatments, billing, inventory (incl. PO receive / expired consume), staff, reports, chart/encounters, lab orders, notification templates, imaging orders, Golden Smile named-seed login, nav/UX, plus a full-page smoke (`StaffPagesSmokeTest`) and form-abuse smoke (`FormAbuseSmokeTest`); HTTP feature tests still own 403/validation/abuse matrices (`HttpPageAccessTest`, `FormAbuseTest`, `AuthAbuseTest`, `ModelCatalogTest`)
+- Browser tests (`tests/Browser`, Pest + Playwright): login, dashboard, patients, appointments, treatments, billing, inventory (incl. PO receive / expired consume), staff (incl. dentist appearing on the calendar after staff create), reports, chart/encounters, lab orders, notification templates, imaging orders, Golden Smile named-seed login, nav/UX, plus a full-page smoke (`StaffPagesSmokeTest`) and form-abuse smoke (`FormAbuseSmokeTest`); HTTP feature tests still own 403/validation/abuse matrices (`HttpPageAccessTest`, `FormAbuseTest`, `AuthAbuseTest`, `ModelCatalogTest`, `PickerOptionsTest`)
 
 - Reports: hub + daily appointments, patient registration, outstanding balances, payments (method breakdown), inventory stock, low stock, treatment statistics; date range; Admin/Accountant revenue; Dentist self-scoped clinical stats; Lab no finance
 - Demo seed: named Golden Smile staff/patients (incl. Ahmed Ali `PAT-2026-00001`, Maria Santos), appointments, three SKUs, FEE catalog; generate extras match JSON `kpis` (1,284 active patients, 18 today appts, 7 unpaid invoices, inventory 86 / low 3 / out 1 / $1,482.00). Pest uses named-only seeder. Weekly `fri: 0` holds when seed day is not Friday.

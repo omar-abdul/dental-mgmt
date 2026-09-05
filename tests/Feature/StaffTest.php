@@ -22,6 +22,15 @@ test('admin can create staff of any role', function (ClinicRole $role) {
     expect($staff)->not->toBeNull();
     expect($staff->role)->toBe($role);
     expect(Hash::check('password12', $staff->password))->toBeTrue();
+
+    if ($role === ClinicRole::Dentist) {
+        expect($staff->dentist)->not->toBeNull()
+            ->and($staff->dentist->display_name)->toBe('New Staff')
+            ->and($staff->dentist->is_active)->toBeTrue()
+            ->and($staff->dentist->created_by)->toBe($admin->id);
+    } else {
+        expect($staff->dentist)->toBeNull();
+    }
 })->with([
     'admin' => ClinicRole::Admin,
     'dentist' => ClinicRole::Dentist,

@@ -2,6 +2,14 @@
 
 Completed architecture goals (G0–G15) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
 
+## 2026-09-05 — Staff-created dentists in pickers
+
+Creating a staff user with the Dentist role only wrote `users`. Appointment/treatment/lab/imaging/chart dropdowns (and the day-calendar columns) read `dentists`, so registered dentists never appeared. `staff.store` now creates an active dentist profile (`display_name` = staff name) in the same transaction. Tests cover that path plus the same “created record shows up elsewhere” contract for patient typeahead and supplier/SKU on PO create.
+
+- **Verified:** `./vendor/bin/sail artisan test --compact tests/Feature/StaffTest.php tests/Feature/PickerOptionsTest.php tests/Browser/StaffTest.php` — 35 passed. `vendor/bin/pint --dirty --format agent`.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none (architecture G0–G15 complete)
+
 ## 2026-09-05 — Full page, form, and model automated coverage
 
 Cataloged every domain model (49), routed Vue page, and mutation, then added Pest coverage: persist each model, GET guest/authorized/403 matrices, empty/invalid/abuse payloads (XSS, SQL-like strings, overlong, extra keys), and Playwright smoke of every staff GET page plus login/patient-create abuse in the UI. Two real defects blocked the suite and were fixed: garbage report `from`/`to` dates no longer 500, and admin patient chart no longer blanks when a treatment-plan item form mounts (Wayfinder two-param `.form()` must take an array or object).
