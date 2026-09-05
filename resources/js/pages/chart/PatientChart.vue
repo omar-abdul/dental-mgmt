@@ -284,7 +284,7 @@ defineOptions({
                             </Badge>
                             <Form
                                 v-if="canCreatePlan"
-                                v-bind="TreatmentPlanController.updateItem.form(plan.id, item.id)"
+                                v-bind="TreatmentPlanController.updateItem.form([plan.id, item.id])"
                                 v-slot="{ errors, processing }"
                                 class="flex flex-col items-end gap-2"
                                 :data-test="`plan-item-acceptance-form-${item.id}`"

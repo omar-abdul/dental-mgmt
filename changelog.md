@@ -2,6 +2,22 @@
 
 Completed architecture goals (G0–G15) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
 
+## 2026-09-05 — Full page, form, and model automated coverage
+
+Cataloged every domain model (49), routed Vue page, and mutation, then added Pest coverage: persist each model, GET guest/authorized/403 matrices, empty/invalid/abuse payloads (XSS, SQL-like strings, overlong, extra keys), and Playwright smoke of every staff GET page plus login/patient-create abuse in the UI. Two real defects blocked the suite and were fixed: garbage report `from`/`to` dates no longer 500, and admin patient chart no longer blanks when a treatment-plan item form mounts (Wayfinder two-param `.form()` must take an array or object).
+
+- **Verified:** `./vendor/bin/sail artisan test --compact tests/Feature/ModelCatalogTest.php tests/Feature/HttpPageAccessTest.php tests/Feature/AuthAbuseTest.php tests/Feature/FormAbuseTest.php` — 259 passed. `PLAYWRIGHT_BROWSERS_PATH=0 ./vendor/bin/sail artisan test --compact tests/Browser/StaffPagesSmokeTest.php tests/Browser/FormAbuseSmokeTest.php` — 49 passed. `vendor/bin/pint --dirty --format agent`.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none (architecture G0–G15 complete). Ask for a full `./vendor/bin/sail artisan test --compact` suite run.
+
+## 2026-09-05 — Sail MySQL pending G10/G12 tables (inventory_batches 1146)
+
+Inventory index 500ed with `SQLSTATE[42S02]` on `inventory_batches`. G12 code was already shipped; Sail MySQL `laravel` had never recorded several G10 leftover tables and all G12 inventory migrations (G11/G13–G15 had already run). Dropped an empty incomplete `odontogram_surfaces` row set, then applied pending migrations (batch 9). No product code change.
+
+- **Verified:** Table exists; expiry query runs; authenticated `GET /inventory` 200; `./vendor/bin/sail artisan test --compact tests/Feature/InventoryTest.php` — 20 passed
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none (architecture G0–G15 complete)
+
 ## 2026-09-05 — G15 Imaging orders (metadata)
 
 Imaging orders (`IMG-…`) with optional result findings/impression and an optional file on the Laravel `local` disk. Admin/Dentist write; Nurse may view; Receptionist is 403. Imaging nav for authorized roles. No DICOM viewer or new npm packages.

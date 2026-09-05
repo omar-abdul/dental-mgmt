@@ -2,6 +2,18 @@
 
 Per-run fix log for goal-workflow Corrector appends. Architecture goal completions go in root `changelog.md`.
 
+## 2026-09-05 — Full page, form, and model coverage — implementer defects
+
+### Fixed
+
+- **Report dates** — Invalid `from`/`to` query strings no longer throw `InvalidFormatException`; fall back to month-start / today (`app/Services/ReportDateRange.php`)
+- **Admin patient chart** — `TreatmentPlanController.updateItem.form(plan.id, item.id)` crashed the page (Wayfinder two-param helpers take `[id, id]` or a named object). Chart with plan items now renders Save tooth / Update status (`resources/js/pages/chart/PatientChart.vue`)
+
+### Notes
+
+- Tasks touched: T3, T4, T5
+- Tests / checks run: Feature coverage 259 passed; Browser smoke + form abuse 49 passed; Pint dirty
+
 ## 2026-09-04 — G13 Finance extras — correct pass
 
 ### Fixed

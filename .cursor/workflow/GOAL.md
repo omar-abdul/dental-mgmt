@@ -1,7 +1,5 @@
-# GOAL — none active
+# GOAL — idle
 
-Architecture G0–G15 are complete. No in-flight goal.
+No architecture G-id or `/goal-workflow` run is in flight.
 
-- **Architecture id:** n/a
-- **Mode:** —
-- **Why:** last G-id (G15) closed 2026-09-05
+Last completed: **Full page, form, and model automated coverage** (2026-09-05, Mode A-light). Catalog: `.cursor/workflow/coverage-matrix.md`.

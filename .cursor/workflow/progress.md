@@ -7,13 +7,13 @@
 
 | Task id | Blocker | Since | Needed from |
 |---------|---------|-------|-------------|
-| | | YYYY-MM-DD | user / dep / env |
+| | | | |
 
 ## Incomplete after verify
 
 | Task id | What’s left | Severity residue | Next step |
 |---------|-------------|------------------|-----------|
-| | | Critical / High / Medium / Low | |
+| | | | |
 
 ## Backlog (deferred Low / Question)
 
