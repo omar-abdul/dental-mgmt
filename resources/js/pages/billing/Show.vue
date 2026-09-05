@@ -34,6 +34,8 @@ type Payment = {
     payment_number: string;
     amount_cents: number;
     amount_formatted: string;
+    remaining_refundable_cents: number;
+    remaining_refundable_formatted: string;
     method: string;
     method_label: string;
     status: string;
@@ -109,8 +111,10 @@ const requiresReference = computed(() =>
 
 const balanceDollars = computed(() => (props.invoice.balance_cents / 100).toFixed(2));
 
-const completedPayments = computed(() =>
-    props.invoice.payments.filter((payment) => payment.status === 'completed'),
+const refundablePayments = computed(() =>
+    props.invoice.payments.filter(
+        (payment) => payment.status === 'completed' && payment.remaining_refundable_cents > 0,
+    ),
 );
 
 function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -385,7 +389,7 @@ defineOptions({
             </CardContent>
         </Card>
 
-        <div v-if="canRefund && completedPayments.length > 0" class="flex gap-2">
+        <div v-if="canRefund && refundablePayments.length > 0" class="flex gap-2">
             <Button variant="outline" @click="showRefundForm = !showRefundForm">
                 {{ showRefundForm ? 'Hide refund form' : 'Process refund' }}
             </Button>
@@ -412,11 +416,11 @@ defineOptions({
                         >
                             <option value="">Select payment</option>
                             <option
-                                v-for="payment in completedPayments"
+                                v-for="payment in refundablePayments"
                                 :key="payment.id"
                                 :value="payment.payment_number"
                             >
-                                {{ payment.payment_number }} — {{ payment.amount_formatted }}
+                                {{ payment.payment_number }} — {{ payment.remaining_refundable_formatted }} remaining
                             </option>
                         </select>
                         <InputError :message="errors.original_payment_number" />

@@ -493,6 +493,38 @@ test('sequential refunds cannot drive amount paid below zero', function () {
         ->and($invoice->amount_paid_cents)->toBeGreaterThanOrEqual(0);
 });
 
+test('invoice show exposes zero remaining refundable cents after full refund', function () {
+    $admin = User::factory()->admin()->create();
+    $treatment = createCompletedTreatmentWithProcedures(feeCents: 5000);
+    $invoice = generateInvoiceForTreatment($treatment, $admin);
+
+    test()->actingAs($admin)
+        ->post(route('billing.payments.store', $invoice), [
+            'amount' => 50.00,
+            'method' => PaymentMethod::Cash->value,
+        ])
+        ->assertRedirect();
+
+    $payment = Payment::query()->where('invoice_id', $invoice->id)->firstOrFail();
+
+    test()->actingAs($admin)
+        ->post(route('billing.refunds.store', $invoice), [
+            'original_payment_number' => $payment->payment_number,
+            'amount' => 50.00,
+        ])
+        ->assertRedirect();
+
+    $this->actingAs($admin)
+        ->get(route('billing.show', $invoice))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('billing/Show')
+            ->where('invoice.payments', fn ($payments) => collect($payments)->contains(
+                fn (array $row): bool => $row['payment_number'] === $payment->payment_number
+                    && $row['remaining_refundable_cents'] === 0,
+            )));
+});
+
 test('card payment requires reference number', function () {
     $user = User::factory()->admin()->create();
     $treatment = createCompletedTreatmentWithProcedures(feeCents: 5000);

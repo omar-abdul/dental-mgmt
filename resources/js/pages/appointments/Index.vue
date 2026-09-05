@@ -190,6 +190,13 @@ function openEditDialog(appointment: AppointmentItem): void {
     showEditDialog.value = true;
 }
 
+function durationMinutesBetween(startsAt: string, endsAt: string): number {
+    const start = new Date(startsAt);
+    const end = new Date(endsAt);
+
+    return Math.round((end.getTime() - start.getTime()) / 60000);
+}
+
 function closeEditDialog(): void {
     showEditDialog.value = false;
     editingAppointment.value = null;
@@ -661,6 +668,7 @@ defineOptions({
                             type="number"
                             min="5"
                             step="5"
+                            :default-value="editingAppointment ? String(durationMinutesBetween(editingAppointment.starts_at, editingAppointment.ends_at)) : ''"
                         />
                         <InputError :message="errors.duration_minutes" />
                     </div>

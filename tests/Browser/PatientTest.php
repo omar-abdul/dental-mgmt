@@ -61,3 +61,32 @@ test('receptionist can search show and archive a patient', function () {
     expect($patient->fresh()->trashed())->toBeTrue();
     expect(AuditLog::query()->where('action', 'patient.viewed')->count())->toBeGreaterThan(0);
 });
+
+test('receptionist can permanently delete archived patient from show dialog', function () {
+    $receptionist = User::factory()->receptionist()->create();
+    $patient = Patient::factory()->create([
+        'first_name' => 'Delete',
+        'last_name' => 'Target',
+        'patient_number' => 'PAT-2026-00099',
+    ]);
+
+    $this->actingAs($receptionist);
+
+    $page = visit(route('patients.show', $patient));
+
+    $page->click('@archive-patient-button')
+        ->assertSee('This patient is archived and read-only.')
+        ->click('@delete-patient-button')
+        ->click('@confirm-delete-patient-button')
+        ->assertSee('No patients found.')
+        ->assertNoJavaScriptErrors();
+
+    expect(Patient::withTrashed()->find($patient->id))->toBeNull();
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'patient.deleted',
+        'auditable_type' => Patient::class,
+        'auditable_id' => $patient->id,
+        'user_id' => $receptionist->id,
+    ]);
+});

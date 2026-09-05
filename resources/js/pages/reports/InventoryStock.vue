@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import ReportDateRangeFilter from '@/components/reports/ReportDateRangeFilter.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -76,12 +75,6 @@ defineOptions({
                 Back to reports
             </Link>
         </div>
-
-        <ReportDateRangeFilter
-            :action="inventoryStockRoute().url"
-            :from="filters.from"
-            :to="filters.to"
-        />
 
         <div class="grid gap-4 sm:grid-cols-2">
             <Card>

@@ -54,7 +54,7 @@ class ReportsController extends Controller
     {
         $user = $this->authorizeFinanceReports($request);
         $range = ReportDateRange::fromRequest($request);
-        $data = $reports->outstandingBalances();
+        $data = $reports->outstandingBalances($range);
         $data['total_balance_formatted'] = $this->formatCents($data['total_balance_cents']);
 
         return Inertia::render('reports/OutstandingBalances', [

@@ -189,6 +189,7 @@ defineOptions({
                                 :name="`items[${index}][expiry_date]`"
                                 v-model="line.expiry_date"
                                 type="date"
+                                required
                             />
                             <InputError :message="errors[`items.${index}.expiry_date`]" />
                         </div>

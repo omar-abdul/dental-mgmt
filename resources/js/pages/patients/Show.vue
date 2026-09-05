@@ -4,6 +4,16 @@ import PatientController from '@/actions/App/Http/Controllers/PatientController'
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit as patientsEdit, index as patientsIndex, show as patientsShow } from '@/routes/patients';
@@ -53,6 +63,7 @@ defineProps<{
     patient: PatientDetail;
     canUpdate: boolean;
     canArchive: boolean;
+    canDelete: boolean;
 }>();
 
 defineOptions({
@@ -86,6 +97,46 @@ defineOptions({
                         Archive
                     </Button>
                 </Form>
+                <Dialog v-if="canDelete">
+                    <DialogTrigger as-child>
+                        <Button variant="destructive" data-test="delete-patient-button">
+                            Delete permanently
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <Form
+                            v-bind="PatientController.destroy.form(patient.id)"
+                            class="space-y-6"
+                            v-slot="{ errors, processing }"
+                        >
+                            <DialogHeader class="space-y-3">
+                                <DialogTitle>Permanently delete this patient?</DialogTitle>
+                                <DialogDescription>
+                                    This action cannot be undone. All patient records will be permanently
+                                    removed.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <InputError :message="errors.patient" />
+
+                            <DialogFooter class="gap-2">
+                                <DialogClose as-child>
+                                    <Button type="button" variant="secondary">
+                                        Cancel
+                                    </Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    :disabled="processing"
+                                    data-test="confirm-delete-patient-button"
+                                >
+                                    Delete permanently
+                                </Button>
+                            </DialogFooter>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
 

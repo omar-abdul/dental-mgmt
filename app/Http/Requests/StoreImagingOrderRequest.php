@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\ImagingOrderStatus;
 use App\Enums\ImagingOrderType;
+use App\Enums\PatientStatus;
 use App\Models\Dentist;
 use App\Models\Encounter;
 use App\Models\ImagingOrder;
@@ -25,10 +26,18 @@ class StoreImagingOrderRequest extends FormRequest
      */
     public function rules(): array
     {
+        $patientId = $this->integer('patient_id');
+
         return [
-            'patient_id' => ['required', Rule::exists(Patient::class, 'id')],
-            'dentist_id' => ['required', Rule::exists(Dentist::class, 'id')],
-            'encounter_id' => ['nullable', Rule::exists(Encounter::class, 'id')],
+            'patient_id' => [
+                'required',
+                Rule::exists(Patient::class, 'id')->where(function ($query): void {
+                    $query->where('status', PatientStatus::Active->value)
+                        ->whereNull('deleted_at');
+                }),
+            ],
+            'dentist_id' => ['required', Rule::exists(Dentist::class, 'id')->where('is_active', true)],
+            'encounter_id' => ['nullable', Rule::exists(Encounter::class, 'id')->where('patient_id', $patientId)],
             'type' => ['required', Rule::enum(ImagingOrderType::class)],
             'notes' => ['nullable', 'string', 'max:5000'],
             'status' => ['nullable', Rule::enum(ImagingOrderStatus::class)],

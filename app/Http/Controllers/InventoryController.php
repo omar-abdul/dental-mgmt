@@ -67,7 +67,10 @@ class InventoryController extends Controller
             ->count();
 
         $items = $itemsQuery
-            ->with(['batches' => fn ($query) => $query->where('quantity', '>', 0)->orderBy('expiry_date')])
+            ->with(['batches' => fn ($query) => $query
+                ->where('quantity', '>', 0)
+                ->whereDate('expiry_date', '>=', today())
+                ->orderBy('expiry_date')])
             ->paginate(15)
             ->withQueryString()
             ->through(fn (InventoryItem $item) => $this->inventoryListItem($item, $request));

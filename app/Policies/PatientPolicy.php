@@ -60,6 +60,15 @@ class PatientPolicy
         return $user->hasRole(...self::WRITE_ROLES);
     }
 
+    public function delete(User $user, Patient $patient): bool
+    {
+        if (! $this->isArchived($patient)) {
+            return false;
+        }
+
+        return $user->hasRole(...self::WRITE_ROLES);
+    }
+
     private function isArchived(Patient $patient): bool
     {
         return $patient->trashed() || $patient->status === PatientStatus::Archived;

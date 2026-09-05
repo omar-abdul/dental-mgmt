@@ -2,6 +2,14 @@
 
 Completed architecture goals (G0–G15) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
 
+## 2026-09-05 — Form-data wiring fixes and archived patient delete
+
+Corrected frontend form fields that loaded the wrong backend data (critical medical flags wiped on edit, inactive patients in pickers, Completed appointments on treatment create, unused report date filters, chart plan items ignoring the fee catalog, appointment duration rewrite, expired consume batches, and related validation/UI mismatches). Archived patients can be permanently deleted after a confirmation dialog; invoices/payments still cannot be hard-deleted.
+
+- **Verified:** `./vendor/bin/sail artisan test --compact tests/Feature/PatientTest.php tests/Feature/AppointmentTest.php tests/Feature/TreatmentTest.php tests/Feature/ReportsTest.php tests/Feature/BillingTest.php tests/Feature/InventoryTest.php tests/Feature/FormAbuseTest.php` — 244 passed. `PLAYWRIGHT_BROWSERS_PATH=0 ./vendor/bin/sail artisan test --compact tests/Browser/PatientTest.php` — 3 passed (after `npm run build`). R1–R14 closed. `vendor/bin/pint --dirty --format agent` (Corrector).
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none (architecture G0–G15 complete). Ask for a full `./vendor/bin/sail artisan test --compact` suite run.
+
 ## 2026-09-05 — Staff-created dentists in pickers
 
 Creating a staff user with the Dentist role only wrote `users`. Appointment/treatment/lab/imaging/chart dropdowns (and the day-calendar columns) read `dentists`, so registered dentists never appeared. `staff.store` now creates an active dentist profile (`display_name` = staff name) in the same transaction. Tests cover that path plus the same “created record shows up elsewhere” contract for patient typeahead and supplier/SKU on PO create.

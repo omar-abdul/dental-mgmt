@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\AppointmentValidationRules;
 use App\Enums\AppointmentStatus;
+use App\Enums\PatientStatus;
 use App\Enums\TreatmentStatus;
 use App\Http\Requests\StoreTreatmentRequest;
 use App\Models\Appointment;
@@ -26,6 +28,8 @@ use Inertia\Response;
 
 class TreatmentController extends Controller
 {
+    use AppointmentValidationRules;
+
     public function index(Request $request): Response
     {
         Gate::authorize('viewAny', Treatment::class);
@@ -62,6 +66,7 @@ class TreatmentController extends Controller
         $selectedPatientId = $request->integer('patient_id') ?: null;
         $selectedPatient = $selectedPatientId !== null
             ? Patient::query()
+                ->where('status', PatientStatus::Active)
                 ->with(['allergies', 'conditions', 'medications'])
                 ->find($selectedPatientId)
             : null;
@@ -362,10 +367,7 @@ class TreatmentController extends Controller
         return Appointment::query()
             ->where('patient_id', $patientId)
             ->whereDoesntHave('treatment')
-            ->whereNotIn('status', [
-                AppointmentStatus::Cancelled,
-                AppointmentStatus::NoShow,
-            ])
+            ->whereIn('status', $this->linkableAppointmentStatuses())
             ->orderByDesc('starts_at')
             ->limit(50)
             ->get(['id', 'number', 'starts_at'])

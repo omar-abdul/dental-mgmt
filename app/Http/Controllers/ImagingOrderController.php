@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ImagingOrderStatus;
 use App\Enums\ImagingOrderType;
+use App\Enums\PatientStatus;
 use App\Http\Requests\StoreImagingOrderRequest;
 use App\Models\Dentist;
 use App\Models\Encounter;
@@ -60,7 +61,9 @@ class ImagingOrderController extends Controller
 
         $selectedPatientId = $request->integer('patient_id') ?: null;
         $selectedPatient = $selectedPatientId !== null
-            ? Patient::query()->find($selectedPatientId)
+            ? Patient::query()
+                ->where('status', PatientStatus::Active)
+                ->find($selectedPatientId)
             : null;
 
         $user = $request->user();

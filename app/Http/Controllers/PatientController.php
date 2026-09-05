@@ -11,6 +11,7 @@ use App\Models\Patient;
 use App\Models\PatientAllergy;
 use App\Models\PatientCondition;
 use App\Models\PatientMedication;
+use App\Models\User;
 use App\Services\PatientNumberGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -19,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,7 +37,7 @@ class PatientController extends Controller
         }
 
         $patients = Patient::query()
-            ->where('status', '!=', PatientStatus::Archived)
+            ->where('status', PatientStatus::Active)
             ->where(function ($query) use ($search): void {
                 $this->applyPatientSearch($query, $search);
             })
@@ -138,6 +140,7 @@ class PatientController extends Controller
             'patient' => $this->patientDetail($patient),
             'canUpdate' => $request->user()?->can('update', $patient) ?? false,
             'canArchive' => $request->user()?->can('archive', $patient) ?? false,
+            'canDelete' => $this->canPermanentlyDelete($request->user(), $patient),
         ]);
     }
 
@@ -194,6 +197,52 @@ class PatientController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Patient archived.')]);
 
         return to_route('patients.show', $patient);
+    }
+
+    public function destroy(Request $request, Patient $patient): RedirectResponse
+    {
+        Gate::authorize('delete', $patient);
+
+        DB::transaction(function () use ($request, $patient): void {
+            $lockedPatient = Patient::withTrashed()
+                ->whereKey($patient->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($this->patientHasBillingRecords($lockedPatient)) {
+                throw ValidationException::withMessages([
+                    'patient' => __('Patient cannot be deleted while invoices or payments exist.'),
+                ]);
+            }
+
+            AuditLog::query()->create([
+                'action' => 'patient.deleted',
+                'auditable_type' => Patient::class,
+                'auditable_id' => $lockedPatient->id,
+                'user_id' => $request->user()?->id,
+                'ip' => $request->ip(),
+            ]);
+
+            $lockedPatient->forceDelete();
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Patient permanently deleted.')]);
+
+        return to_route('patients.index');
+    }
+
+    private function canPermanentlyDelete(?User $user, Patient $patient): bool
+    {
+        if ($user === null || ! $user->can('delete', $patient)) {
+            return false;
+        }
+
+        return ! $this->patientHasBillingRecords($patient);
+    }
+
+    private function patientHasBillingRecords(Patient $patient): bool
+    {
+        return $patient->invoices()->exists() || $patient->payments()->exists();
     }
 
     /**
@@ -343,12 +392,6 @@ class PatientController extends Controller
                 continue;
             }
 
-            $attributes = [
-                'label' => $item['label'],
-                'is_critical' => (bool) ($item['is_critical'] ?? false),
-                'updated_by' => $userId,
-            ];
-
             if (! empty($item['id'])) {
                 $existing = $model->newQuery()
                     ->where($foreignKey, $parentKey)
@@ -356,12 +399,27 @@ class PatientController extends Controller
                     ->first();
 
                 if ($existing !== null) {
+                    $attributes = [
+                        'label' => $item['label'],
+                        'updated_by' => $userId,
+                    ];
+
+                    if (array_key_exists('is_critical', $item)) {
+                        $attributes['is_critical'] = (bool) $item['is_critical'];
+                    }
+
                     $existing->update($attributes);
                     $keptIds[] = $existing->id;
 
                     continue;
                 }
             }
+
+            $attributes = [
+                'label' => $item['label'],
+                'is_critical' => (bool) ($item['is_critical'] ?? false),
+                'updated_by' => $userId,
+            ];
 
             $created = $model->newQuery()->create(array_merge($attributes, [
                 $foreignKey => $parentKey,

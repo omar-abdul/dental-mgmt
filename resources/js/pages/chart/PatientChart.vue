@@ -71,6 +71,19 @@ const selectedTooth = ref('36');
 const selectedStatus = ref('healthy');
 const selectedSurfaces = ref<string[]>([]);
 const odontogramNotes = ref('');
+const planItemDescriptions = ref<Record<number, string>>({});
+const planItemFeeCents = ref<Record<number, string>>({});
+
+function applyFeeItemToPlan(planId: number, feeItemId: string): void {
+    const feeItem = props.feeItems.find((item) => String(item.id) === feeItemId);
+
+    if (feeItem === undefined) {
+        return;
+    }
+
+    planItemDescriptions.value[planId] = feeItem.label;
+    planItemFeeCents.value[planId] = String(feeItem.price_cents);
+}
 
 const teethMap = computed(() => {
     const map = new Map<string, ToothRecord>();
@@ -327,8 +340,29 @@ defineOptions({
                     :data-test="`plan-item-form-${plan.id}`"
                 >
                     <div class="space-y-2 sm:col-span-2">
+                        <Label :for="`fee_item_id_${plan.id}`">Procedure</Label>
+                        <select
+                            :id="`fee_item_id_${plan.id}`"
+                            name="fee_item_id"
+                            class="border-input bg-background flex h-9 w-full rounded-md border px-3 py-1 text-sm"
+                            data-test="plan-item-fee-select"
+                            @change="applyFeeItemToPlan(plan.id, ($event.target as HTMLSelectElement).value)"
+                        >
+                            <option value="">Select from fee catalog (optional)</option>
+                            <option v-for="feeItem in feeItems" :key="feeItem.id" :value="feeItem.id">
+                                {{ feeItem.label }} — {{ (feeItem.price_cents / 100).toFixed(2) }}
+                            </option>
+                        </select>
+                        <InputError :message="errors.fee_item_id" />
+                    </div>
+                    <div class="space-y-2 sm:col-span-2">
                         <Label :for="`description_${plan.id}`">Description</Label>
-                        <Input :id="`description_${plan.id}`" name="description" required />
+                        <Input
+                            :id="`description_${plan.id}`"
+                            name="description"
+                            v-model="planItemDescriptions[plan.id]"
+                            required
+                        />
                         <InputError :message="errors.description" />
                     </div>
                     <div class="space-y-2">
@@ -337,7 +371,13 @@ defineOptions({
                     </div>
                     <div class="space-y-2">
                         <Label :for="`fee_cents_${plan.id}`">Fee (cents)</Label>
-                        <Input :id="`fee_cents_${plan.id}`" name="fee_cents" type="number" min="0" value="0" />
+                        <Input
+                            :id="`fee_cents_${plan.id}`"
+                            name="fee_cents"
+                            type="number"
+                            min="0"
+                            v-model="planItemFeeCents[plan.id]"
+                        />
                     </div>
                     <div class="space-y-2">
                         <Label :for="`acceptance_status_${plan.id}`">Acceptance</Label>

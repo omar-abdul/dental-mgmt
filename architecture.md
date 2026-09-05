@@ -79,7 +79,7 @@ and the `playwright` npm package (staff UI E2E).
 - Brand Golden Smile Dental Clinic; timezone `Africa/Mogadishu`
 - Split login + navy Wave 1 chrome with a live Reports hub (seven Wave 1 reports)
 - Wave 1 tables, models, factories; DCMS fee catalog + working hours seeded; integer cents
-- Patients: register/search/show/update/archive; unique `PAT-{YYYY}-{#####}`; audit on show
+- Patients: register/search/show/update/archive; unique `PAT-{YYYY}-{#####}`; audit on show; Active-only typeahead; archived patients may be permanently deleted (confirm dialog) when they have no invoices/payments
 - Appointments: day calendar from `working_hours`; book/edit/cancel/reschedule/check-in; dentist/chair overlap 422; Friday/outside-hours 422; patient typeahead on book/edit
 - Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only; patient typeahead on create; receptionist can generate an invoice from a completed treatment show
 - Billing: invoice from completed treatment; partial/overpay rules; recorded ZAAD/Sahal/eDahab/MyCash; receipts; Admin/Accountant refunds; Dentist view-only; expenses, daily cash close, payment plans, insurance claim stub, MM recon (Admin/Accountant)
@@ -147,9 +147,12 @@ No `reports` table of documents. `activity_logs` for dashboard; `audit_logs` /
 
 ### D7 — Soft-delete / archive; money never physically deleted
 
-Patients: `status` active/inactive/archived + `softDeletes`. Archived =
-read-only. Appointments keep rows (`cancelled`, `rescheduled`).
-Invoices/payments: `cancelled`/`refunded`/`written_off`, never hard-deleted.
+Patients: `status` active/inactive/archived + `softDeletes`. Archived is
+read-only for edits. Admin/Receptionist may **permanently delete** an archived
+patient after a confirmation dialog when the patient has **no** invoices or
+payments (`restrictOnDelete` on those FKs). Appointments keep rows
+(`cancelled`, `rescheduled`). Invoices/payments: `cancelled`/`refunded`/
+`written_off`, never hard-deleted.
 
 ### D8 — Two JSON files
 

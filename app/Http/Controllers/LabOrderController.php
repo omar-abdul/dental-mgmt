@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\LabOrderStatus;
+use App\Enums\PatientStatus;
 use App\Http\Requests\StoreLabOrderRequest;
 use App\Http\Requests\UpdateLabOrderStatusRequest;
 use App\Models\Dentist;
@@ -57,7 +58,9 @@ class LabOrderController extends Controller
 
         $selectedPatientId = $request->integer('patient_id') ?: null;
         $selectedPatient = $selectedPatientId !== null
-            ? Patient::query()->find($selectedPatientId)
+            ? Patient::query()
+                ->where('status', PatientStatus::Active)
+                ->find($selectedPatientId)
             : null;
 
         $user = $request->user();

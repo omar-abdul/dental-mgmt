@@ -25,7 +25,7 @@ class StoreAppointmentRequest extends FormRequest
             'patient_id' => ['required', 'integer', $this->bookablePatientExistsRule()],
             'dentist_id' => ['required', 'integer', $this->activeDentistExistsRule()],
             'chair_id' => ['required', 'integer', $this->activeChairExistsRule()],
-            'fee_item_id' => ['nullable', 'integer', 'exists:fee_items,id'],
+            'fee_item_id' => ['nullable', 'integer', $this->activeFeeItemExistsRule()],
             'starts_at' => ['required', 'date'],
             'duration_minutes' => ['nullable', 'integer', 'min:5', 'max:480'],
             'reason' => ['nullable', 'string', 'max:255'],

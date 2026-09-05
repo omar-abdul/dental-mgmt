@@ -138,15 +138,15 @@ class AppointmentController extends Controller
 
         $startsAt = $request->has('starts_at')
             ? Carbon::parse($request->string('starts_at')->value())
-            : $appointment->starts_at->copy();
+            : Carbon::parse($appointment->starts_at);
 
-        $durationMinutes = $request->has('duration_minutes')
+        $durationMinutes = $request->filled('duration_minutes')
             ? ($request->integer('duration_minutes') ?: null)
             : (int) $appointment->starts_at->diffInMinutes($appointment->ends_at);
 
-        $endsAt = $request->has('starts_at') || $request->has('duration_minutes') || $request->has('fee_item_id')
+        $endsAt = $request->has('starts_at') || $request->filled('duration_minutes') || $request->has('fee_item_id')
             ? $scheduler->calculateEndsAt($startsAt, $feeItem, $durationMinutes)
-            : $appointment->ends_at->copy();
+            : Carbon::parse($appointment->ends_at);
 
         $timesChanged = ! $startsAt->equalTo($appointment->starts_at) || ! $endsAt->equalTo($appointment->ends_at);
 

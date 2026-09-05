@@ -272,6 +272,27 @@ test('outstanding balances report sums open invoice balances', function () {
             ->where('report.total_balance_cents', 5000));
 });
 
+test('outstanding balances report filters by invoice issued date', function () {
+    $this->travelTo(reportsFrozenTime());
+
+    seedReportsDataset();
+    $admin = User::factory()->admin()->create();
+
+    Invoice::factory()->forPatient(Patient::factory()->create())->create([
+        'status' => InvoiceStatus::Issued,
+        'balance_cents' => 9000,
+        'issued_at' => Carbon::parse('2025-12-15', 'Africa/Mogadishu'),
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('reports.outstanding-balances', reportsDateRange()))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('reports/OutstandingBalances')
+            ->where('report.invoice_count', 1)
+            ->where('report.total_balance_cents', 5000));
+});
+
 test('inventory stock and low stock reports return expected counts', function () {
     $this->travelTo(reportsFrozenTime());
 

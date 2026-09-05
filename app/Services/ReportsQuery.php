@@ -125,26 +125,24 @@ class ReportsQuery
      *     rows: list<array{id: int, invoice_number: string, patient_name: string, issued_at: string, balance_cents: int, balance_formatted: string, status: string, status_label: string}>
      * }
      */
-    public function outstandingBalances(): array
+    public function outstandingBalances(ReportDateRange $range): array
     {
-        $invoices = Invoice::query()
-            ->with('patient')
+        $baseQuery = Invoice::query()
             ->whereIn('status', self::OUTSTANDING_INVOICE_STATUSES)
             ->where('balance_cents', '>', 0)
+            ->where('issued_at', '>=', $range->from)
+            ->where('issued_at', '<=', $range->to);
+
+        $invoices = (clone $baseQuery)
+            ->with('patient')
             ->orderByDesc('issued_at')
             ->limit(100)
             ->get();
 
-        $totalBalanceCents = (int) Invoice::query()
-            ->whereIn('status', self::OUTSTANDING_INVOICE_STATUSES)
-            ->where('balance_cents', '>', 0)
-            ->sum('balance_cents');
+        $totalBalanceCents = (int) (clone $baseQuery)->sum('balance_cents');
 
         return [
-            'invoice_count' => (int) Invoice::query()
-                ->whereIn('status', self::OUTSTANDING_INVOICE_STATUSES)
-                ->where('balance_cents', '>', 0)
-                ->count(),
+            'invoice_count' => (int) (clone $baseQuery)->count(),
             'total_balance_cents' => $totalBalanceCents,
             'rows' => $invoices
                 ->map(fn (Invoice $invoice): array => [
@@ -390,7 +388,7 @@ class ReportsQuery
 
         if ($canViewFinance) {
             $payments = $this->payments($range);
-            $outstanding = $this->outstandingBalances();
+            $outstanding = $this->outstandingBalances($range);
 
             $summary['payments_cents'] = $payments['total_cents'];
             $summary['payments_formatted'] = $payments['total_formatted'];

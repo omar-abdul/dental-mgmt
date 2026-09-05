@@ -2,6 +2,41 @@
 
 Per-run fix log for goal-workflow Corrector appends. Architecture goal completions go in root `changelog.md`.
 
+## 2026-09-05 — Patient permanent delete billing guard — correct pass
+
+### Fixed
+
+- **R13** — Shared `canPermanentlyDelete` / `patientHasBillingRecords` for show `canDelete` and destroy eligibility; dialog copy is all-or-nothing with cannot-be-undone wording (`PatientController.php`, `Show.vue`, `PatientTest.php`)
+- **R14** — Destroy locks archived patient row inside transaction, re-checks billing, then audit + `forceDelete` (`PatientController.php`, `PatientTest.php`)
+
+### Notes
+
+- Findings touched: R13, R14 fixed
+- Tests / checks run: `./vendor/bin/sail exec laravel.test vendor/bin/pint --dirty --format agent`; `./vendor/bin/sail artisan test --compact tests/Feature/PatientTest.php` — 38 passed
+
+## 2026-09-05 — Frontend form field vs backend data audit — correct pass
+
+### Fixed
+
+- **R1** — Preserve existing `is_critical` when absent on medical sync; Edit posts hidden critical flags (`PatientController.php`, `Edit.vue`, `PatientTest.php`)
+- **R2** — Treatment create appointment options use `linkableAppointmentStatuses()` (`TreatmentController.php`, `TreatmentTest.php`)
+- **R3** — Outstanding balances filter by `issued_at` within range; removed date filter from inventory stock/low-stock snapshots (`ReportsQuery.php`, `InventoryStock.vue`, `LowStock.vue`, `ReportsTest.php`)
+- **R4** — Chart plan-item form adds fee catalog select and copies description/fee (`PatientChart.vue`)
+- **R5** — Patient search, bookable exists, and create prefills limited to `PatientStatus::Active` (`PatientController.php`, `AppointmentValidationRules.php`, lab/imaging/treatment controllers, `PatientTest.php`)
+- **R6** — Edit dialog prefills duration; blank posted duration leaves `ends_at` unchanged (`appointments/Index.vue`, `AppointmentController.php`, `AppointmentTest.php`)
+- **R7** — Consume batch options omit expired batches (`InventoryController.php`, `InventoryTest.php` browser)
+- **R8** — PO line expiry input marked `required` (`purchase-orders/Create.vue`)
+- **R9** — Appointment store/update use `activeFeeItemExistsRule()` (`StoreAppointmentRequest.php`, `UpdateAppointmentRequest.php`, `AppointmentTest.php`)
+- **R10** — Lab/imaging store rules scope encounter/treatment to patient and require active dentist/patient (`StoreLabOrderRequest.php`, `StoreImagingOrderRequest.php`)
+- **R11** — Fortify reset-password view passes `passwordRules` (`FortifyServiceProvider.php`)
+- **R12** — Invoice detail exposes `remaining_refundable_cents`; refund picker lists only payments with remainder (`BillingController.php`, `billing/Show.vue`, `BillingTest.php`)
+- **T5** — Archived patient permanent delete: policy, destroy route/action, show dialog, audit + forceDelete with invoice/payment guard (`PatientPolicy.php`, `PatientController.php`, `Show.vue`, `PatientTest.php`, `FormAbuseTest.php`, browser `PatientTest.php`)
+
+### Notes
+
+- Findings touched: R1–R12 fixed; T5 implemented
+- Tests / checks run: `./vendor/bin/sail exec laravel.test vendor/bin/pint --dirty --format agent`; `./vendor/bin/sail artisan wayfinder:generate`; `./vendor/bin/sail npm run build`; `./vendor/bin/sail artisan test --compact tests/Feature/PatientTest.php tests/Feature/AppointmentTest.php tests/Feature/TreatmentTest.php tests/Feature/ReportsTest.php tests/Feature/BillingTest.php tests/Feature/FormAbuseTest.php tests/Feature/InventoryTest.php` — 242 passed; `PLAYWRIGHT_BROWSERS_PATH=0 ./vendor/bin/sail artisan test --compact tests/Browser/PatientTest.php tests/Browser/InventoryTest.php` — 7 passed
+
 ## 2026-09-05 — Full page, form, and model coverage — implementer defects
 
 ### Fixed

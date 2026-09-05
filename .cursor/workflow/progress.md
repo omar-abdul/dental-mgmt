@@ -52,12 +52,12 @@
 - Updated: 2026-09-04
 
 ### B23 — Expired batches selectable in consume UI (G12 R9)
-- Related findings: R9
-- Status: deferred
-- What's left: Disable or hide expired options in inventory consumption `<select>` (server already rejects)
+- Related findings: R7 (this run)
+- Status: wontfix
+- What's left: Consume batch query now omits `expiry_date < today` (R7). Duplicate of the form-data audit fix.
 - Why: Low
 - Expires: 2026-10-04
-- Updated: 2026-09-04
+- Updated: 2026-09-05
 
 ### B17 — Weekly Fri KPI on Friday seed days (G9)
 - Related findings: —

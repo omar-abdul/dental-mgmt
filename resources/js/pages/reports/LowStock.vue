@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import ReportDateRangeFilter from '@/components/reports/ReportDateRangeFilter.vue';
 import Heading from '@/components/Heading.vue';
 import {
     Card,
@@ -59,12 +58,6 @@ defineOptions({
                 Back to reports
             </Link>
         </div>
-
-        <ReportDateRangeFilter
-            :action="lowStockRoute().url"
-            :from="filters.from"
-            :to="filters.to"
-        />
 
         <Card>
             <CardHeader class="pb-2">

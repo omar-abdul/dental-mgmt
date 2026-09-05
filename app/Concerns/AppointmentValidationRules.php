@@ -12,7 +12,7 @@ trait AppointmentValidationRules
     protected function bookablePatientExistsRule(): Exists
     {
         return Rule::exists('patients', 'id')->where(function ($query): void {
-            $query->where('status', '!=', PatientStatus::Archived->value)
+            $query->where('status', PatientStatus::Active->value)
                 ->whereNull('deleted_at');
         });
     }

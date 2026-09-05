@@ -111,13 +111,13 @@ test('admin receives a purchase order and sees quantity increase in ui and datab
         ->assertNoJavaScriptErrors();
 });
 
-test('admin cannot consume expired batch stock from adjust dialog', function () {
+test('admin adjust dialog omits expired batches from consume select', function () {
     $admin = User::factory()->admin()->create();
     $item = InventoryItem::factory()->create([
         'name' => 'Expired composite',
         'quantity' => 8,
     ]);
-    $batch = InventoryBatch::factory()->expired()->create([
+    InventoryBatch::factory()->expired()->create([
         'inventory_item_id' => $item->id,
         'batch_number' => 'EXP-BATCH-1',
         'quantity' => 8,
@@ -130,13 +130,6 @@ test('admin cannot consume expired batch stock from adjust dialog', function () 
     $page->assertSee('Expired composite')
         ->click('@adjust-inventory-button')
         ->select('type', InventoryMovementType::Consumption->value)
-        ->select('inventory_batch_id', (string) $batch->id)
-        ->fill('quantity', '2')
-        ->click('@save-adjustment-button')
-        ->assertSee('Cannot consume stock from an expired batch')
+        ->assertDontSee('(expired)')
         ->assertNoJavaScriptErrors();
-
-    expect($item->fresh()->quantity)->toBe(8);
-    expect($batch->fresh()->quantity)->toBe(8);
-    expect(InventoryMovement::query()->count())->toBe(0);
 });

@@ -180,6 +180,12 @@ defineOptions({
                         :name="`allergies[${index}][id]`"
                         :value="allergy.id"
                     />
+                    <input
+                        v-if="allergy.is_critical"
+                        type="hidden"
+                        :name="`allergies[${index}][is_critical]`"
+                        value="1"
+                    />
                     <Input
                         :id="`allergy_label_${allergy.id}`"
                         :name="`allergies[${index}][label]`"
@@ -206,6 +212,12 @@ defineOptions({
                         :name="`conditions[${index}][id]`"
                         :value="condition.id"
                     />
+                    <input
+                        v-if="condition.is_critical"
+                        type="hidden"
+                        :name="`conditions[${index}][is_critical]`"
+                        value="1"
+                    />
                     <Input
                         :id="`condition_label_${condition.id}`"
                         :name="`conditions[${index}][label]`"
@@ -231,6 +243,12 @@ defineOptions({
                         type="hidden"
                         :name="`medications[${index}][id]`"
                         :value="medication.id"
+                    />
+                    <input
+                        v-if="medication.is_critical"
+                        type="hidden"
+                        :name="`medications[${index}][is_critical]`"
+                        value="1"
                     />
                     <Input
                         :id="`medication_label_${medication.id}`"

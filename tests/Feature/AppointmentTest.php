@@ -5,6 +5,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentRevision;
 use App\Models\Chair;
 use App\Models\Dentist;
+use App\Models\FeeItem;
 use App\Models\Patient;
 use App\Models\User;
 use Database\Seeders\WorkingHourSeeder;
@@ -435,4 +436,35 @@ test('check in rejects appointments that are not scheduled or confirmed', functi
         ->assertSessionHasErrors('status');
 
     expect($inProgress->fresh()->status)->toBe(AppointmentStatus::InProgress);
+});
+
+test('updating appointment with blank duration preserves existing length', function () {
+    $receptionist = User::factory()->receptionist()->create();
+    $appointment = Appointment::factory()->create([
+        'starts_at' => Carbon::parse('2026-09-02 09:00:00', 'Africa/Mogadishu'),
+        'ends_at' => Carbon::parse('2026-09-02 10:00:00', 'Africa/Mogadishu'),
+    ]);
+
+    $this->actingAs($receptionist)
+        ->put(route('appointments.update', $appointment), [
+            'reason' => 'Updated reason',
+            'duration_minutes' => '',
+        ])
+        ->assertRedirect();
+
+    $appointment->refresh();
+
+    expect($appointment->ends_at->equalTo(Carbon::parse('2026-09-02 10:00:00', 'Africa/Mogadishu')))->toBeTrue();
+});
+
+test('inactive fee item cannot be assigned to appointment', function () {
+    $receptionist = User::factory()->receptionist()->create();
+    $feeItem = FeeItem::factory()->inactive()->create();
+    $appointment = Appointment::factory()->create();
+
+    $this->actingAs($receptionist)
+        ->put(route('appointments.update', $appointment), [
+            'fee_item_id' => $feeItem->id,
+        ])
+        ->assertSessionHasErrors('fee_item_id');
 });

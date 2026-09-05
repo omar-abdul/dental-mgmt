@@ -1,34 +1,41 @@
-# Review results — G13 Finance extras
+# Review results — Frontend form field vs backend data audit
 
-- Date: 2026-09-04
+- Date: 2026-09-05
 - Mode: verify
-- Scope: G13 finance — `ExpenseController.php`, `PaymentPlanController.php`, `InsuranceClaimController.php`, `DailyCashClosingService.php`, `MobileMoneyReconciliationService.php`, G13 models/policies/requests, `resources/js/pages/expenses/Index.vue`, `AppSidebar.vue`, `ClinicRole`, `tests/Feature/FinanceExtrasTest.php`, `tests/Browser/ExpensesBrowserTest.php`, migration `2026_09_04_152043_create_g13_finance_tables.php`
-- Goal: G13 — Finance extras (`.cursor/workflow/GOAL.md`, `architecture.md` §G13, §6 Expenses Admin/Accountant only)
+- Scope: R1–R14 corrector pass + T5 `patients.destroy`
+- Goal: Form-data fixes + archived patient delete (`.cursor/workflow/GOAL.md`, Mode A)
 
 ## Summary
 
 | ID | Severity | Status | Path | Title |
 |----|----------|--------|------|-------|
-| R1 | High | fixed | `app/Services/DailyCashClosingService.php` | Cash/MM system totals ignore same-day refunds (Completed rows remain) |
-| R2 | High | fixed | `app/Http/Requests/StorePaymentPlanRequest.php` | Multiple plans per invoice can each allocate up to full balance |
-| R3 | High | fixed | `app/Http/Controllers/PaymentPlanController.php` | Payment plan create lacks invoice row lock (concurrent over-allocation) |
-| R4 | Medium | fixed | `app/Http/Controllers/ExpenseController.php` | System totals computed outside transaction (stale closing/recon snapshot) |
-| R5 | Medium | fixed | `app/Models/DailyCashClosing.php` | Mass-assignable server-authoritative money fields on closing/recon models |
-| R6 | Medium | fixed | `app/Concerns/ConvertsDollarAmounts.php` | Extra decimal places truncated silently (no validation reject) |
-| R7 | Medium | fixed | `tests/Feature/FinanceExtrasTest.php` | Incomplete 403 matrix for dentist/receptionist on G13 POST endpoints |
-| R8 | Medium | fixed | `tests/Feature/FinanceExtrasTest.php` | No test for duplicate daily close or concurrent unique violation handling |
-| R9 | Low | deferred | `resources/js/pages/billing/Show.vue` | Payment plans and insurance claims have no billing UI (HTTP-only) |
-| R10 | Low | fixed | `architecture.md` | G13 verification bullets still unchecked (docs drift) |
-| R11 | Question | deferred | `app/Http/Requests/StoreDailyCashClosingRequest.php` | `closing_date` accepts any date via API (UI posts today only) |
+| R1 | High | fixed | `resources/js/pages/patients/Edit.vue` | Medical `is_critical` wiped on every patient save |
+| R2 | Medium | fixed | `app/Http/Controllers/TreatmentController.php` | Linked-appointment dropdown includes Completed visits |
+| R3 | Medium | fixed | `app/Services/ReportsQuery.php` | Date-range filters ignored on outstanding/stock/low-stock |
+| R4 | Medium | fixed | `resources/js/pages/chart/PatientChart.vue` | Plan-item form ignores loaded fee catalog |
+| R5 | Medium | fixed | `app/Http/Controllers/PatientController.php` | PatientPicker includes inactive patients |
+| R6 | Medium | fixed | `resources/js/pages/appointments/Index.vue` | Edit duration not prefilled; empty submit rewrites length |
+| R7 | Low | fixed | `app/Http/Controllers/InventoryController.php` | Expired batches still selectable on consume (B23) |
+| R8 | Low | fixed | `resources/js/pages/inventory/purchase-orders/Create.vue` | PO line expiry required by server, not by the control |
+| R9 | Medium | fixed | `app/Http/Requests/StoreAppointmentRequest.php` | Appointment `fee_item_id` allows inactive catalog rows |
+| R10 | Low | fixed | `app/Http/Requests/StoreLabOrderRequest.php` | Lab/imaging encounter/treatment exists rules not patient-scoped |
+| R11 | Low | fixed | `app/Providers/FortifyServiceProvider.php` | Reset-password view omits `passwordRules` |
+| R12 | Low | fixed | `resources/js/pages/billing/Show.vue` | Refund picker still lists fully refunded originals |
+| R13 | Medium | fixed | `app/Http/Controllers/PatientController.php` | `canDelete` ignores invoice/payment billing guard |
+| R14 | Medium | fixed | `app/Http/Controllers/PatientController.php` | Permanent delete lacks row lock + in-transaction billing re-check |
 
 ## Assessment overview
 
-- Guidelines: Integer cents and Mogadishu TZ are used consistently; MM recon `system_total_cents` is server-computed (not client-forgeable on current paths). `daily_cash_closings.closing_date` **has** a DB unique index and FormRequest `Rule::unique` — double-close same day is blocked at validation/DB layer, but concurrent requests are untested and may 500. Policies restrict expenses/close/recon/plans/claims to Admin+Accountant per architecture §6. Pint/Wayfinder patterns followed on expenses page.
-- Blast radius: Cash close and MM recon read from shared `payments` ledger; refund semantics in `PaymentProcessor` (original stays `Completed`, separate `Refunded` row) interact badly with new reconciliation sums. Payment plans attach to billing invoices with no UI wiring — staff must hit API routes directly for plans/claims.
-- Security: Dentist 403 on expenses index/store/cash-close is enforced and tested. No Critical auth bypass found on scoped routes. Defense-in-depth gap: ledger models expose `system_*_cents` / `difference_cents` / `transaction_count` as fillable. Receptionist/Nurse/Lab POST to MM recon, payment-plans, insurance-claims are policy-blocked but not feature-tested.
-- Readability: Controllers are thin; services isolate sum logic. Expense index duplicates `systemCashTotalCentsForDate()` call (lines 61–62).
-- Extensibility: Payment plan validation mirrors single-shot balance check without cumulative plan tracking — conflicts with G13 “allocations ≤ invoice balance” intent when multiple plans exist. No `paymentPlans()` on `Invoice` model.
-- Cohesiveness: `PaymentProcessor` uses `lockForUpdate()` for pay/refund; G13 plan create and cash close omit the same pattern. Refund-aware net totals are not aligned with G5 refund model. Payment plan / insurance claim stubs are backend-only while expenses module is fully surfaced in Vue.
+- Guidelines: G8 advertises date-range filters; three reports (and the hub outstanding card) parse `from`/`to` into props but never apply them. D5 fee catalog is loaded for chart plan items and never bound. D7 archived patients are excluded from pickers; inactive patients are not. D11 cents/dollars and D12 payment methods are consistent on billing/expenses.
+- Blast radius: Patient edit save is a daily receptionist path — R1 silently clears critical allergy/condition/med flags. Appointment edit save without touching duration can change `ends_at` (R6). Treatment create shows unlinkable Completed appointments (R2).
+- Security: No Critical auth bypass in option lists. Dentist/chair/fee dropdowns are active-only on the pages that matter. R10 is POST-forge of another patient’s encounter/treatment id while the dropdown itself is correctly patient-scoped. Lab/imaging dentist dropdowns are active-only; store rules are looser (`exists` without `is_active`).
+- Readability: Option helpers (`dentistOptions`, `feeItemOptions`) are consistent across appointments/treatments/lab/imaging. Chart `feeItems` prop with no consumer is dead weight.
+- Extensibility: Expense categories are four hardcoded strings with `string|max:100` validation (no enum). Imaging create offers every status, not a create-time subset.
+- Cohesiveness: Treatment procedures already require active fee items; appointment store/update do not (R9). Patient show renders `is_critical`; edit discards it (R1).
+
+**Correct backend-sourced wiring (no finding):** Login/forgot/confirm (no option lists); profile name/email from `auth.user`; staff `ClinicRole::cases()` (six roles); notification template bodies from DB; patient create/edit gender enum; appointment dentists (active `dentists` table) and chairs (active chairs); appointment/treatment fee dropdowns (active `fee_items`); treatment dentist + default dentist from the user’s dentist profile; billing payment methods / MM providers / verification statuses (D12); payment amount prefill from `balance_cents`; expenses cash-close and MM recon system totals computed server-side; reports daily appointments, patient registration, payments, and treatment statistics honor the date range (Dentist self-scoped on clinical reports); odontogram FDI/status/surface vs `dental_chart`; SOAP prefill; lab Show status buttons = `allowedTransitions()`; inventory category and movement-type enums; PO supplier/item lists (no inactive column exists); imaging type enum.
+
+Catalog: `.cursor/workflow/form-field-catalog.md`.
 
 ## Critical
 
@@ -36,116 +43,153 @@ None.
 
 ## High
 
-### R1 — Cash/MM system totals ignore same-day refunds (Completed rows remain)
+### R1 — Medical `is_critical` wiped on every patient save
 - Severity: High
 - Status: fixed
-- Path: `app/Services/DailyCashClosingService.php`
-- Area: cohesiveness
-- Finding: Daily cash closing and mobile-money reconciliation sum only `PaymentStatus::Completed` rows. Refunds create a **new** payment with `PaymentStatus::Refunded` while the original payment remains `Completed`. Same-day cash or MM refunds therefore leave the original inflow in `system_*_total_cents` with no offset — net system total is overstated and reconciliation differences are wrong.
-- Evidence: `DailyCashClosingService::systemCashTotalCentsForDate()` lines 17–21 filter `status = Completed` and `method = Cash`. `MobileMoneyReconciliationService::systemTotalsForDateAndProvider()` lines 21–36 same filter for MM methods. `PaymentProcessor::refund()` lines 156–168 creates a positive `amount_cents` row with `status = Refunded` without changing the original payment status. `FinanceExtrasTest` cash-close and MM-recon tests use only Completed payments — no refund scenario.
-- Suggested fix: Compute net totals: sum Completed inflows minus Refunded outflows (same method/provider/date window), or mark original payments refunded and exclude them. Mirror logic in both services; add feature tests with same-day cash refund and MM refund before close/recon.
-
-### R2 — Multiple plans per invoice can each allocate up to full balance
-- Severity: High
-- Status: fixed
-- Path: `app/Http/Requests/StorePaymentPlanRequest.php`
-- Area: security
-- Finding: Each payment plan is validated only against the invoice’s current `balance_cents`. There is no check of existing active plans’ installment totals. Two (or more) plans on the same invoice can each allocate up to the full balance, producing cumulative promised installments far above the outstanding balance — violating G13 allocation cap intent.
-- Evidence: `withValidator()` line 55 compares `$totalAllocationCents > $invoice->balance_cents` only. `payment_plans` migration has no unique/active constraint on `invoice_id`. `PaymentPlanController` creates plans without querying existing plans. `FinanceExtrasTest` creates a single plan only.
-- Suggested fix: Before create, sum `installments.amount_cents` for active plans on the invoice and ensure `$totalAllocationCents + $existingAllocated <= $invoice->balance_cents` (or allow only one active plan per invoice). Add feature test: two sequential plans that individually fit balance but exceed cumulatively → 422.
-
-### R3 — Payment plan create lacks invoice row lock (concurrent over-allocation)
-- Severity: High
-- Status: fixed
-- Path: `app/Http/Controllers/PaymentPlanController.php`
-- Area: security
-- Finding: Plan creation runs in a transaction but never locks the invoice row. Concurrent POSTs can both read the same `balance_cents`, pass validation, and insert plans whose combined allocations exceed balance — same class of TOCTOU bug `PaymentProcessor::pay()` prevents with `lockForUpdate()`.
-- Evidence: `PaymentPlanController::store()` lines 29–48 — `DB::transaction` creates plan/installments without `Invoice::query()->lockForUpdate()`. `StorePaymentPlanRequest::withValidator()` reads `$invoice->balance_cents` outside the transaction. Contrast `PaymentProcessor.php` line 44.
-- Suggested fix: Inside the transaction, reload invoice with `lockForUpdate()`, recompute remaining allocatable balance (including existing plans per R2), validate, then insert. Add feature test with simulated concurrent creates or sequential rapid double-submit.
+- Path: `resources/js/pages/patients/Edit.vue`
+- Area: blast-radius
+- Finding: Edit loads `is_critical` on allergy/condition/medication props (and Show displays “(critical)”) but the form only posts `id` and `label`. Sync treats a missing flag as false, so any save that includes those arrays clears critical flags.
+- Evidence: `Edit.vue` types include `is_critical` (line 19) but rows submit hidden id + label only (lines 180–187, 204–213, 230–238). `PatientController::syncMedicalCollection` sets `'is_critical' => (bool) ($item['is_critical'] ?? false)` (~348). Create has no critical UI either (old B9); edit is data loss, not just a missing toggle.
+- Suggested fix: Preserve existing `is_critical` when the key is absent (or post hidden `is_critical` from the loaded prop). Do not default missing to false on update.
 
 ## Medium
 
-### R4 — System totals computed outside transaction (stale closing/recon snapshot)
+### R2 — Linked-appointment dropdown includes Completed visits
 - Severity: Medium
 - Status: fixed
-- Path: `app/Http/Controllers/ExpenseController.php`
-- Area: extensibility
-- Finding: `storeDailyClosing` and `storeMobileMoneyReconciliation` query system totals, then insert the record outside any transaction that includes the payment ledger. A payment or refund recorded between the sum and the insert persists a `system_*_total_cents` snapshot that does not match the ledger at commit time — audit trail shows a closing/recon against stale data.
-- Evidence: `storeDailyClosing()` lines 99–113: `systemCashTotalCentsForDate()` then `DailyCashClosing::create()`. `storeMobileMoneyReconciliation()` lines 128–149: `systemTotalsForDateAndProvider()` then create. Neither wraps sum + insert in `DB::transaction` with consistent read.
-- Suggested fix: Wrap sum + insert in a transaction; optionally re-query totals immediately before insert. Document that closings are point-in-time snapshots if intentional.
+- Path: `app/Http/Controllers/TreatmentController.php`
+- Area: cohesiveness
+- Finding: Treatment create lists untreated appointments that are not Cancelled/NoShow, including **Completed**. Store validation `linkableAppointmentExistsRule` excludes Completed, so staff pick a visible option and get 422.
+- Evidence: `appointmentOptions()` `whereNotIn` Cancelled, NoShow (~365-368). `AppointmentValidationRules::linkableAppointmentStatuses()` is Scheduled/Confirmed/CheckedIn/InProgress/InTreatment/Rescheduled only (~40-47).
+- Suggested fix: Filter `appointmentOptions` with the same status list as `linkableAppointmentStatuses()`.
 
-### R5 — Mass-assignable server-authoritative money fields on closing/recon models
+### R3 — Date-range filters ignored on outstanding/stock/low-stock
 - Severity: Medium
 - Status: fixed
-- Path: `app/Models/DailyCashClosing.php`
-- Area: security
-- Finding: `DailyCashClosing` and `MobileMoneyReconciliation` mark ledger fields (`system_cash_total_cents`, `system_total_cents`, `difference_cents`, `transaction_count`) as `#[Fillable]`. Current controllers set these explicitly, but any future `create($request->validated())` or mass assignment would allow forgery of system totals — contrary to GOAL note to follow `PaymentProcessor` / FormRequest patterns for money.
-- Evidence: `DailyCashClosing` Fillable lines 27–36 include `system_cash_total_cents`, `difference_cents`. `MobileMoneyReconciliation` Fillable lines 32–44 include `system_total_cents`, `transaction_count`, `difference_cents`. Controllers currently bypass this risk.
-- Suggested fix: Remove server-computed fields from `$fillable`; set only via explicit attributes or guarded `$guarded`. Align with how payment amounts are handled elsewhere.
-
-### R6 — Extra decimal places truncated silently (no validation reject)
-- Severity: Medium
-- Status: fixed
-- Path: `app/Concerns/ConvertsDollarAmounts.php`
+- Path: `app/Services/ReportsQuery.php`
 - Area: guidelines
-- Finding: `dollarsToCents()` truncates fractional input to two digits via `substr($fraction, 0, 2)` without error. Laravel `numeric` validation accepts values like `10.999`, which become 1099¢ instead of 1100¢ — silent money loss vs user intent.
-- Evidence: `ConvertsDollarAmounts` lines 21–24. Used by `StoreExpenseRequest`, `StoreDailyCashClosingRequest`, `StoreMobileMoneyReconciliationRequest`, `StorePaymentPlanRequest` with `numeric` rules only (no `decimal:0,2` or regex).
-- Suggested fix: Add validation rule `decimal:0,2` (or regex) on all dollar amount fields; reject excess precision before conversion.
+- Finding: G8 requires date-range filters. Outstanding balances, inventory stock, and low stock still render `ReportDateRangeFilter` and pass `filters.from`/`to`, but the queries ignore the range. Hub outstanding summary is the same snapshot.
+- Evidence: `ReportsController::outstandingBalances` parses `$range` then calls `$reports->outstandingBalances()` with no range (~53-57). `ReportsQuery::outstandingBalances()` filters status + `balance_cents > 0` only (~128-136). `inventoryStock()` / `lowStock()` likewise (~239-283). Payments and daily appointments do use the range.
+- Suggested fix: Either apply `issued_at` / as-of date to those queries, or remove the date filter from those three pages and the hub outstanding card.
 
-### R7 — Incomplete 403 matrix for dentist/receptionist on G13 POST endpoints
+### R4 — Plan-item form ignores loaded fee catalog
 - Severity: Medium
 - Status: fixed
-- Path: `tests/Feature/FinanceExtrasTest.php`
-- Area: guidelines
-- Finding: Feature tests assert dentist 403 for expenses index, store, and daily close only. No tests for dentist (or receptionist/nurse/lab) POST to mobile-money reconciliation, payment-plans, or insurance-claims — the main “dentist 403 holes” called out in review scope.
-- Evidence: `FinanceExtrasTest.php` dentist tests at lines 67–88 and 131–141. Policies restrict MM recon and plans to Admin/Accountant (`ExpensePolicy`, `MobileMoneyReconciliationPolicy`, `PaymentPlanPolicy`). No receptionist 403 tests despite receptionist having billing access.
-- Suggested fix: Add feature tests: dentist and receptionist POST to `expenses.mobile-money-reconciliations.store`, `billing.payment-plans.store`, `billing.insurance-claims.store` → 403; assert no DB rows.
+- Path: `resources/js/pages/chart/PatientChart.vue`
+- Area: cohesiveness
+- Finding: Chart passes active `feeItems` (id, label, price_cents). The add-item form has free-text description, tooth FDI, and **fee in cents** — no `fee_item_id` select. D5 says the fee catalog is the procedure/price source. Store already accepts `fee_item_id` and can copy price when `fee_cents === 0`.
+- Evidence: `PatientChartController.php` ~97-106; `PatientChart.vue` plan-item form ~322-365; `StoreTreatmentPlanItemRequest.php` ~30; `TreatmentPlanController.php` ~24-31.
+- Suggested fix: Add a fee-item select bound to `feeItems`; set description/fee_cents from the chosen catalog row (staff can still override description).
 
-### R8 — No test for duplicate daily close or concurrent unique violation handling
+### R5 — PatientPicker includes inactive patients
 - Severity: Medium
 - Status: fixed
-- Path: `tests/Feature/FinanceExtrasTest.php`
-- Area: guidelines
-- Finding: Duplicate same-day close is prevented by `Rule::unique` on `closing_date` and DB unique index (migration line 26), but there is no feature test asserting the second POST returns validation error and leaves one row. Concurrent double-submit behavior (possible uncaught `UniqueConstraintViolationException` → 500) is also untested.
-- Evidence: `StoreDailyCashClosingRequest` lines 26–29 unique rule. Migration `daily_cash_closings.closing_date` unique. `FinanceExtrasTest` happy-path close only (lines 90–128). `ExpenseController::storeDailyClosing` has no retry/catch for unique violations.
-- Suggested fix: Feature test: close twice for same date → 422, count = 1. Optionally wrap create in try/catch and map unique violation to validation error (as `PaymentProcessor` does for payment numbers).
+- Path: `app/Http/Controllers/PatientController.php`
+- Area: cohesiveness
+- Finding: Search used by appointment book/edit, treatment create, lab create, and imaging create excludes **Archived** only. `PatientStatus::Inactive` still appears. Dashboard active-patient KPIs already ignore inactive. D7 marks archived read-only; inactive is a first-class status that should not book or start treatments if it means “not currently a patient.”
+- Evidence: `PatientController::search` `where('status', '!=', PatientStatus::Archived)` (~37-38). `bookablePatientExistsRule()` same archived-only filter (`AppointmentValidationRules.php` ~14-16). Treatment/lab/imaging `?patient_id=` prefill uses `Patient::find` with no status filter.
+- Suggested fix: Restrict search + bookable exists + create prefills to `PatientStatus::Active` (keep archived-only if product intends inactive to still book — confirm first).
+
+### R6 — Edit duration not prefilled; empty submit rewrites length
+- Severity: Medium
+- Status: fixed
+- Path: `resources/js/pages/appointments/Index.vue`
+- Area: blast-radius
+- Finding: Edit dialog prefills start time and procedure but leaves duration empty. The empty number input is still posted, so `has('duration_minutes')` is true, integer 0 becomes null, and `ends_at` is recalculated from fee default or 30 minutes — a silent reschedule.
+- Evidence: `appointments/Index.vue` ~657-664 (no `:default-value`). `AppointmentController::update` ~143-148 uses `$request->has('duration_minutes')` then `integer ?: null`, then recalculates ends when duration/fee/start changed.
+- Suggested fix: Prefill duration from `diffInMinutes(starts_at, ends_at)`. Treat empty posted duration as “unchanged” (ignore `has`) unless the user typed a value.
+
+### R9 — Appointment `fee_item_id` allows inactive catalog rows
+- Severity: Medium
+- Status: fixed
+- Path: `app/Http/Requests/StoreAppointmentRequest.php`
+- Area: cohesiveness
+- Finding: Book/edit dropdowns list active fee items only. Store/update validate `exists:fee_items,id` without `is_active`. Treatment procedures already use `activeFeeItemExistsRule()`.
+- Evidence: `StoreAppointmentRequest.php` ~28; `UpdateAppointmentRequest.php` ~31; `AppointmentController::feeItemOptions` filters `is_active` (~385-396); `TreatmentController` + `StoreTreatmentRequest` require active.
+- Suggested fix: Use `activeFeeItemExistsRule()` on appointment store/update (nullable still OK).
 
 ## Low
 
-### R9 — Payment plans and insurance claims have no billing UI (HTTP-only)
+### R7 — Expired batches still selectable on consume (B23)
 - Severity: Low
-- Status: open
-- Path: `resources/js/pages/billing/Show.vue`
-- Area: extensibility
-- Finding: Payment plan and insurance claim routes exist and pass feature tests via HTTP POST, but there is no Vue form, Wayfinder action, or `data-test` coverage on billing show. Admin/Accountant cannot create plans or claims through the app UI — only via direct requests.
-- Evidence: Grep `resources/js` for `payment-plans` / `insurance-claims` returns no matches. `FinanceExtrasTest` POSTs to billing routes; browser tests cover expenses only.
-- Suggested fix: If G13 requires operable UI for plans/claims, add billing show forms gated by policy props; otherwise document backend-only stub in GOAL residue.
-
-### R10 — G13 verification bullets still unchecked (docs drift)
-- Severity: Low
-- Status: open
-- Path: `architecture.md`
-- Area: guidelines
-- Finding: Implementation and 18 passing tests exist, but `architecture.md` §G13 and `.cursor/workflow/GOAL.md` verification checkboxes remain `[ ]`. Tasks T1/T2 are `started` awaiting review — workflow truth lags code state.
-- Evidence: `architecture.md` lines 653–659; `GOAL.md` lines 31–35; `tasks.md` T1/T2 evidence notes tests passed, review pending.
-- Suggested fix: After Fixer/Verifier closes High findings, sync checkboxes and task evidence on atomic close.
-
-## Question
-
-### R11 — `closing_date` accepts any date via API (UI posts today only)
-- Severity: Question
-- Status: open
-- Path: `app/Http/Requests/StoreDailyCashClosingRequest.php`
+- Status: fixed
+- Path: `app/Http/Controllers/InventoryController.php`
 - Area: cohesiveness
-- Finding: Cash-close validation requires a date and uniqueness but does not restrict to clinic “today”. The Vue form posts `todayClosingDate` via hidden field, but an Accountant can POST a past or future `closing_date` directly — possibly intentional backfill, possibly scope creep.
-- Evidence: `StoreDailyCashClosingRequest` rules lines 26–30 — `required|date|unique` only. `Index.vue` line 242 hidden input defaults to today but is not server-enforced.
-- Suggested fix: Confirm product intent. If closings must be same-day only, add server rule comparing to `Carbon::now('Africa/Mogadishu')->toDateString()`.
+- Finding: Consume batch select loads all batches with `quantity > 0`, including expired. Vue labels “(expired)” but still allows choose; server 422. Already backlog B23.
+- Evidence: `InventoryController.php` ~70, ~193-200; `inventory/Index.vue` consume select; `InventoryStockService` rejects expired consume.
+- Suggested fix: Filter `whereDate('expiry_date', '>=', today())` (or hide expired in Vue). Leave to B23 unless this run’s Corrector is asked to include Low.
+
+### R8 — PO line expiry required by server, not by the control
+- Severity: Low
+- Status: fixed
+- Path: `resources/js/pages/inventory/purchase-orders/Create.vue`
+- Area: cohesiveness
+- Finding: Each PO line `expiry_date` is `required|date|after_or_equal:today` but the date input has no `required`. Staff can submit and get a validation error instead of a browser block.
+- Evidence: `StorePurchaseOrderRequest.php` ~32; `Create.vue` ~185-192.
+- Suggested fix: Mark the input `required` (or make the request nullable if expiry can be filled at receive).
+
+### R10 — Lab/imaging encounter/treatment exists rules not patient-scoped
+- Severity: Low
+- Status: fixed
+- Path: `app/Http/Requests/StoreLabOrderRequest.php`
+- Area: security
+- Finding: Dropdowns are correctly limited to the selected patient’s treatments/encounters. Validation is bare `exists`, so a crafted POST can attach another patient’s treatment/encounter. Out of the “data pulled” core, but real.
+- Evidence: `LabOrderController` treatment/encounter options filter `patient_id`; `StoreLabOrderRequest.php` ~29-31; `StoreImagingOrderRequest.php` encounter `exists` only. Dentist rules similarly omit `is_active`.
+- Suggested fix: `Rule::exists(...)->where('patient_id', $this->integer('patient_id'))`; dentist `where('is_active', true)`.
+
+### R11 — Reset-password view omits `passwordRules`
+- Severity: Low
+- Status: fixed
+- Path: `app/Providers/FortifyServiceProvider.php`
+- Area: cohesiveness
+- Finding: `ResetPassword.vue` requires `passwordRules` and binds it to `PasswordInput`. Fortify reset view passes only `email` and `token`. Security settings pass the string correctly.
+- Evidence: `FortifyServiceProvider.php` ~55-58 vs `ResetPassword.vue` ~19-23, 61, 74; `SecurityController.php` ~20-21.
+- Suggested fix: Pass `Password::defaults()->toPasswordRulesString()` (same as Security) on the reset view.
+
+### R12 — Refund picker still lists fully refunded originals
+- Severity: Low
+- Status: fixed
+- Path: `resources/js/pages/billing/Show.vue`
+- Area: cohesiveness
+- Finding: Refund select is `invoice.payments` with `status === 'completed'`. Refunds insert a new Refunded row and leave the original Completed, so a fully refunded payment still appears until `PaymentProcessor` rejects over-refund.
+- Evidence: `billing/Show.vue` ~112-114, ~414-420; `PaymentProcessor::refund` keeps original Completed.
+- Suggested fix: Exclude originals whose remaining refundable cents are 0 (or mark original non-completed when fully refunded).
+
+### R13 — `canDelete` ignores invoice/payment billing guard
+- Severity: Medium
+- Status: fixed
+- Path: `app/Http/Controllers/PatientController.php`, `resources/js/pages/patients/Show.vue`
+- Area: cohesiveness
+- Finding: Show `canDelete` used policy only (archived + role). Destroy rejected patients with invoices/payments, but the Delete permanently button still appeared; dialog copy implied partial delete (“except invoices and payments”).
+- Evidence: `PatientController::show` passed `can('delete', $patient)` only; `destroy` checked billing before delete; `Show.vue` dialog mentioned exceptions.
+- Suggested fix: Shared `canPermanentlyDelete` helper (policy + no billing rows) for show and destroy eligibility; hide button when false; all-or-nothing dialog copy.
+
+### R14 — Permanent delete lacks row lock + in-transaction billing re-check
+- Severity: Medium
+- Status: fixed
+- Path: `app/Http/Controllers/PatientController.php`
+- Area: blast-radius
+- Finding: Billing guard ran outside `DB::transaction` with no row lock, allowing a race where billing could be created between check and `forceDelete`.
+- Evidence: Pre-transaction `invoices()->exists()` / `payments()->exists()` then audit + `forceDelete` inside transaction without `lockForUpdate`.
+- Suggested fix: Inside transaction, lock patient (`withTrashed` + `lockForUpdate`), re-check billing, throw same `ValidationException` if blocked, then audit + `forceDelete`.
 
 ## Verify pass notes
 
+> Re-checked in code; mandatory Sail feature gate 244 passed; browser PatientTest 3 passed after `npm run build`. No open Critical/High.
+
 | Finding id | Prior status | Verify result | Notes |
 |------------|--------------|---------------|-------|
-| R1–R8 | fixed | fixed | Confirmed in code; orchestrator Sail gate 48 passed |
-| R9 | open | deferred | Backlog B24 |
-| R10 | open | fixed | Architecture G13 checkboxes synced on atomic close |
-| R11 | open | deferred | Backlog B25 |
+| R1 | fixed | fixed | `is_critical` preserved on update |
+| R2 | fixed | fixed | Linkable appointment statuses in options |
+| R3 | fixed | fixed | Outstanding uses `issued_at`; stock/low-stock snapshots |
+| R4 | fixed | fixed | Fee catalog on plan item form |
+| R5 | fixed | fixed | Active-only picker/search |
+| R6 | fixed | fixed | Duration prefill; blank duration unchanged |
+| R7 | fixed | fixed | Expired batches omitted from consume |
+| R8 | fixed | fixed | PO expiry required |
+| R9 | fixed | fixed | Active fee item on appointments |
+| R10 | fixed | fixed | Lab/imaging scoped exists |
+| R11 | fixed | fixed | Reset passwordRules |
+| R12 | fixed | fixed | Refund remaining cents |
+| R13 | fixed | fixed | `canDelete` includes billing guard |
+| R14 | fixed | fixed | `lockForUpdate` + in-transaction re-check |

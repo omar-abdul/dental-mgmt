@@ -48,6 +48,7 @@ test('guests cannot submit authenticated mutations', function (string $method, C
     'patients store' => ['post', fn () => route('patients.store')],
     'patients update' => ['put', fn () => route('patients.update', ClinicSurface::records()['patient'])],
     'patients archive' => ['post', fn () => route('patients.archive', ClinicSurface::records()['patient'])],
+    'patients destroy' => ['delete', fn () => route('patients.destroy', Patient::factory()->archived()->create())],
     'appointments store' => ['post', fn () => route('appointments.store')],
     'appointments update' => ['put', fn () => route('appointments.update', ClinicSurface::records()['appointment'])],
     'appointments cancel' => ['post', fn () => route('appointments.cancel', ClinicSurface::records()['appointment'])],

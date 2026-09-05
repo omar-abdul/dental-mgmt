@@ -2,4 +2,4 @@
 
 No architecture G-id or `/goal-workflow` run is in flight.
 
-Last completed: **Staff dentist (and similar) picker coverage** (2026-09-05, Mode A-light).
+Last completed: **Form-data fixes + archived patient delete** (2026-09-05, Mode A).

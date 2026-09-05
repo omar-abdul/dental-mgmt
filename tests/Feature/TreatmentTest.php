@@ -306,6 +306,38 @@ test('cancelled appointment cannot be linked to a treatment', function () {
     expect(Treatment::query()->count())->toBe(0);
 });
 
+test('treatment create omits completed appointments from linkable options', function () {
+    $dentistUser = User::factory()->dentist()->create();
+    $dentist = Dentist::factory()->forUser($dentistUser)->create();
+    $patient = Patient::factory()->create();
+    $scheduled = Appointment::factory()->create([
+        'patient_id' => $patient->id,
+        'dentist_id' => $dentist->id,
+        'status' => AppointmentStatus::Scheduled,
+    ]);
+    $completed = Appointment::factory()->create([
+        'patient_id' => $patient->id,
+        'dentist_id' => $dentist->id,
+        'status' => AppointmentStatus::Completed,
+    ]);
+
+    $this->actingAs($dentistUser)
+        ->get(route('treatments.create', ['patient_id' => $patient->id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('treatments/Create')
+            ->has('appointments', 1)
+            ->where('appointments.0.id', $scheduled->id));
+
+    $this->actingAs($dentistUser)
+        ->post(route('treatments.store'), validTreatmentPayload([
+            'patient_id' => $patient->id,
+            'dentist_id' => $dentist->id,
+            'appointment_id' => $completed->id,
+        ]))
+        ->assertSessionHasErrors('appointment_id');
+});
+
 test('storing treatment as completed sets linked appointment to completed', function () {
     $dentistUser = User::factory()->dentist()->create();
     $dentist = Dentist::factory()->forUser($dentistUser)->create();

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\StoreRefundRequest;
 use App\Models\Invoice;
@@ -160,6 +161,13 @@ class BillingController extends Controller
      */
     private function invoiceDetail(Invoice $invoice): array
     {
+        $refundedByOriginal = Payment::query()
+            ->where('invoice_id', $invoice->id)
+            ->where('status', PaymentStatus::Refunded)
+            ->selectRaw('reference_number, SUM(amount_cents) as refunded_cents')
+            ->groupBy('reference_number')
+            ->pluck('refunded_cents', 'reference_number');
+
         return [
             'id' => $invoice->id,
             'invoice_number' => $invoice->invoice_number,
@@ -196,27 +204,36 @@ class BillingController extends Controller
                 'line_total_cents' => $item->line_total_cents,
                 'line_total_formatted' => $this->formatCents($item->line_total_cents),
             ])->values(),
-            'payments' => $invoice->payments->sortByDesc('created_at')->values()->map(fn (Payment $payment) => [
-                'id' => $payment->id,
-                'payment_number' => $payment->payment_number,
-                'amount_cents' => $payment->amount_cents,
-                'amount_formatted' => $this->formatCents($payment->amount_cents),
-                'method' => $payment->method->value,
-                'method_label' => ucfirst(str_replace('_', ' ', $payment->method->value)),
-                'status' => $payment->status->value,
-                'status_label' => ucfirst(str_replace('_', ' ', $payment->status->value)),
-                'paid_at_formatted' => $payment->paid_at?->format('M j, Y g:i A'),
-                'received_by_name' => $payment->receiver->name,
-                'reference_number' => $payment->reference_number,
-                'receipt_id' => $payment->receipt?->id,
-                'receipt_number' => $payment->receipt?->receipt_number,
-                'mobile_money' => $payment->mobileMoneyTransaction ? [
-                    'provider' => $payment->mobileMoneyTransaction->provider->value,
-                    'payer_phone' => $payment->mobileMoneyTransaction->payer_phone,
-                    'transaction_id' => $payment->mobileMoneyTransaction->transaction_id,
-                    'verification_status' => $payment->mobileMoneyTransaction->verification_status->value,
-                ] : null,
-            ])->values(),
+            'payments' => $invoice->payments->sortByDesc('created_at')->values()->map(function (Payment $payment) use ($refundedByOriginal) {
+                $refundedCents = (int) ($refundedByOriginal[$payment->payment_number] ?? 0);
+                $remainingRefundableCents = $payment->status === PaymentStatus::Completed
+                    ? max(0, $payment->amount_cents - $refundedCents)
+                    : 0;
+
+                return [
+                    'id' => $payment->id,
+                    'payment_number' => $payment->payment_number,
+                    'amount_cents' => $payment->amount_cents,
+                    'amount_formatted' => $this->formatCents($payment->amount_cents),
+                    'remaining_refundable_cents' => $remainingRefundableCents,
+                    'remaining_refundable_formatted' => $this->formatCents($remainingRefundableCents),
+                    'method' => $payment->method->value,
+                    'method_label' => ucfirst(str_replace('_', ' ', $payment->method->value)),
+                    'status' => $payment->status->value,
+                    'status_label' => ucfirst(str_replace('_', ' ', $payment->status->value)),
+                    'paid_at_formatted' => $payment->paid_at?->format('M j, Y g:i A'),
+                    'received_by_name' => $payment->receiver->name,
+                    'reference_number' => $payment->reference_number,
+                    'receipt_id' => $payment->receipt?->id,
+                    'receipt_number' => $payment->receipt?->receipt_number,
+                    'mobile_money' => $payment->mobileMoneyTransaction ? [
+                        'provider' => $payment->mobileMoneyTransaction->provider->value,
+                        'payer_phone' => $payment->mobileMoneyTransaction->payer_phone,
+                        'transaction_id' => $payment->mobileMoneyTransaction->transaction_id,
+                        'verification_status' => $payment->mobileMoneyTransaction->verification_status->value,
+                    ] : null,
+                ];
+            })->values(),
         ];
     }
 
