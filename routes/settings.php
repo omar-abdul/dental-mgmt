@@ -7,7 +7,7 @@ use App\Http\Controllers\Settings\StaffController;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
     Route::redirect('settings', '/settings/profile');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -27,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('settings/staff', [StaffController::class, 'index'])->name('staff.index');
     Route::get('settings/staff/create', [StaffController::class, 'create'])->name('staff.create');
     Route::post('settings/staff', [StaffController::class, 'store'])->name('staff.store');
+    Route::patch('settings/staff/{user}', [StaffController::class, 'update'])->name('staff.update');
 
     Route::get('settings/notification-templates', [NotificationTemplateController::class, 'index'])
         ->name('notification-templates.index');

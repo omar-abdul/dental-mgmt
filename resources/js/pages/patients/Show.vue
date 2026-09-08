@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import PatientController from '@/actions/App/Http/Controllers/PatientController';
 import Heading from '@/components/Heading.vue';
-import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -14,8 +14,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { edit as patientsEdit, index as patientsIndex, show as patientsShow } from '@/routes/patients';
 import { show as treatmentsShow } from '@/routes/treatments';
 
@@ -44,7 +42,6 @@ type PatientDetail = {
     occupation: string | null;
     address: string | null;
     status: string;
-    is_archived: boolean;
     allergies: MedicalItem[];
     conditions: MedicalItem[];
     medications: MedicalItem[];
@@ -62,7 +59,6 @@ type PatientDetail = {
 defineProps<{
     patient: PatientDetail;
     canUpdate: boolean;
-    canArchive: boolean;
     canDelete: boolean;
 }>();
 
@@ -88,36 +84,26 @@ defineOptions({
                 <Button v-if="canUpdate" as-child variant="outline">
                     <Link :href="patientsEdit(patient.id)">Edit</Link>
                 </Button>
-                <Form
-                    v-if="canArchive"
-                    v-bind="PatientController.archive.form(patient.id)"
-                    v-slot="{ processing }"
-                >
-                    <Button type="submit" variant="destructive" :disabled="processing" data-test="archive-patient-button">
-                        Archive
-                    </Button>
-                </Form>
                 <Dialog v-if="canDelete">
                     <DialogTrigger as-child>
                         <Button variant="destructive" data-test="delete-patient-button">
-                            Delete permanently
+                            Delete
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <Form
                             v-bind="PatientController.destroy.form(patient.id)"
                             class="space-y-6"
-                            v-slot="{ errors, processing }"
+                            v-slot="{ processing }"
                         >
                             <DialogHeader class="space-y-3">
-                                <DialogTitle>Permanently delete this patient?</DialogTitle>
+                                <DialogTitle>Delete this patient?</DialogTitle>
                                 <DialogDescription>
-                                    This action cannot be undone. All patient records will be permanently
-                                    removed.
+                                    The patient and related clinical and billing records will be
+                                    removed from active views. This action can be reversed only by
+                                    restoring from the database.
                                 </DialogDescription>
                             </DialogHeader>
-
-                            <InputError :message="errors.patient" />
 
                             <DialogFooter class="gap-2">
                                 <DialogClose as-child>
@@ -131,7 +117,7 @@ defineOptions({
                                     :disabled="processing"
                                     data-test="confirm-delete-patient-button"
                                 >
-                                    Delete permanently
+                                    Delete patient
                                 </Button>
                             </DialogFooter>
                         </Form>
@@ -139,13 +125,6 @@ defineOptions({
                 </Dialog>
             </div>
         </div>
-
-        <p
-            v-if="patient.is_archived"
-            class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-        >
-            This patient is archived and read-only.
-        </p>
 
         <div class="grid gap-6 lg:grid-cols-2">
             <section class="space-y-3 rounded-md border p-4">

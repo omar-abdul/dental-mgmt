@@ -1,6 +1,14 @@
 # Changelog
 
-Completed architecture goals (G0–G15) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
+Completed architecture goals (G0–G16) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
+
+## 2026-09-08 — G16 Clinic ops polish
+
+Searchable dentist combobox on treatment create (replacing the empty native dropdown). Admin/Receptionist soft-delete a patient and related domain rows in one confirm dialog (archive + force-delete removed; invoices/payments are never physically deleted). Admin can deactivate/reactivate staff; inactive accounts cannot log in. Wave 1 reports are printable.
+
+- **Verified:** Verifier Feature gate `./vendor/bin/sail artisan test --compact tests/Feature/PatientTest.php tests/Feature/ReportsTest.php tests/Feature/StaffTest.php tests/Feature/Auth/AuthenticationTest.php tests/Feature/HttpPageAccessTest.php tests/Feature/PickerOptionsTest.php tests/Feature/FormAbuseTest.php` — 320 passed. Guest destroy is 302 to login (R1). Browser: TreatmentTest, PatientTest, StaffTest, ReportsTest (implementer). R1/R2/R4 fixed; R3 Low deferred (B27).
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none (architecture G0–G16 complete). Ask for a full `./vendor/bin/sail artisan test --compact` suite run. Dev DB still needs `sail artisan migrate` if it was not applied outside tests.
 
 ## 2026-09-05 — Form-data wiring fixes and archived patient delete
 

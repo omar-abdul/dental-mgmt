@@ -9,6 +9,7 @@ use App\Models\Treatment;
 use App\Models\User;
 
 test('dentist can record a treatment and prescription from the form', function () {
+    $admin = User::factory()->admin()->create();
     $dentistUser = User::factory()->dentist()->create(['name' => 'Dr. R. Lim']);
     $dentist = Dentist::factory()->forUser($dentistUser)->create([
         'display_name' => 'Dr. R. Lim',
@@ -24,7 +25,7 @@ test('dentist can record a treatment and prescription from the form', function (
         'price_cents' => 5000,
     ]);
 
-    $this->actingAs($dentistUser);
+    $this->actingAs($admin);
 
     $page = visit(route('treatments.index'));
 
@@ -34,7 +35,8 @@ test('dentist can record a treatment and prescription from the form', function (
         ->fill('@patient-picker-search', 'Maria')
         ->click('@patient-picker-option')
         ->assertSee('Maria Santos (PAT-2026-00042)')
-        ->select('dentist_id', (string) $dentist->id)
+        ->fill('@dentist-picker-search', 'Dr. R. Lim')
+        ->click('@dentist-picker-option')
         ->fill('diagnosis', 'Dental caries on tooth 36')
         ->select('#fee_item_id_1', (string) $feeItem->id)
         ->fill('#quantity_1', '1')
@@ -54,7 +56,7 @@ test('dentist can record a treatment and prescription from the form', function (
         ->and($treatment->patient_id)->toBe($patient->id)
         ->and($treatment->dentist_id)->toBe($dentist->id)
         ->and($prescription)->not->toBeNull()
-        ->and($prescription->prescriber_id)->toBe($dentistUser->id)
+        ->and($prescription->prescriber_id)->toBe($admin->id)
         ->and($prescription->number)->toMatch('/^RX-\d{4}-\d{5}$/');
 });
 

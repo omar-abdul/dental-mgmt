@@ -58,3 +58,19 @@ test('staff-created dentist appears on the appointments calendar and book form',
 
     Carbon::setTestNow();
 });
+
+test('admin can toggle staff inactive from settings', function () {
+    $admin = User::factory()->admin()->create();
+    $nurse = User::factory()->nurse()->create(['name' => 'Toggle Nurse']);
+
+    $this->actingAs($admin);
+
+    visit(route('staff.index'))
+        ->assertSee('Toggle Nurse')
+        ->assertSee('Active')
+        ->click('@toggle-staff-active-button')
+        ->assertSee('Inactive')
+        ->assertNoJavaScriptErrors();
+
+    expect($nurse->fresh()->is_active)->toBeFalse();
+});

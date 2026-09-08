@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ClinicRole;
+use App\Models\Dentist;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -114,3 +115,79 @@ test('staff password shorter than ten characters is rejected', function () {
     $response->assertSessionHasErrors('password');
     $this->assertDatabaseMissing('users', ['email' => 'short@example.com']);
 });
+
+test('new staff users default to active', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)->post(route('staff.store'), [
+        'name' => 'Active Staff',
+        'email' => 'active@example.com',
+        'role' => ClinicRole::Nurse->value,
+        'password' => 'password12',
+        'password_confirmation' => 'password12',
+    ])->assertRedirectToRoute('staff.index');
+
+    expect(User::query()->where('email', 'active@example.com')->value('is_active'))->toBeTrue();
+});
+
+test('admin can deactivate and reactivate staff', function () {
+    $admin = User::factory()->admin()->create();
+    $nurse = User::factory()->nurse()->create(['is_active' => true]);
+
+    $this->actingAs($admin)
+        ->patch(route('staff.update', $nurse), ['is_active' => false])
+        ->assertRedirectToRoute('staff.index');
+
+    expect($nurse->fresh()->is_active)->toBeFalse();
+
+    $this->actingAs($admin)
+        ->patch(route('staff.update', $nurse), ['is_active' => true])
+        ->assertRedirectToRoute('staff.index');
+
+    expect($nurse->fresh()->is_active)->toBeTrue();
+});
+
+test('admin cannot deactivate their own account', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->from(route('staff.index'))
+        ->patch(route('staff.update', $admin), ['is_active' => false])
+        ->assertSessionHasErrors('is_active');
+
+    expect($admin->fresh()->is_active)->toBeTrue();
+});
+
+test('deactivating a dentist syncs dentist profile is_active', function () {
+    $admin = User::factory()->admin()->create();
+    $dentistUser = User::factory()->dentist()->create();
+    $dentist = Dentist::factory()->forUser($dentistUser)->create(['is_active' => true]);
+
+    $this->actingAs($admin)
+        ->patch(route('staff.update', $dentistUser), ['is_active' => false])
+        ->assertRedirectToRoute('staff.index');
+
+    expect($dentistUser->fresh()->is_active)->toBeFalse();
+    expect($dentist->fresh()->is_active)->toBeFalse();
+
+    $this->actingAs($admin)
+        ->get(route('treatments.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('dentists', 0));
+});
+
+test('non-admin roles cannot update staff active status', function (ClinicRole $role) {
+    $user = User::factory()->role($role)->create();
+    $target = User::factory()->nurse()->create();
+
+    $this->actingAs($user)
+        ->patch(route('staff.update', $target), ['is_active' => false])
+        ->assertForbidden();
+})->with([
+    'dentist' => ClinicRole::Dentist,
+    'receptionist' => ClinicRole::Receptionist,
+    'nurse' => ClinicRole::Nurse,
+    'accountant' => ClinicRole::Accountant,
+    'lab' => ClinicRole::Lab,
+]);

@@ -71,30 +71,32 @@ and the `playwright` npm package (staff UI E2E).
 
 ## 3. Current state
 
-**Shipped:** G0–G15 (clinic foundation through imaging orders) and Pest Playwright browser coverage for those pages.
+**Shipped:** G0–G16 (clinic foundation through imaging orders, plus clinic ops polish) and Pest Playwright browser coverage for those pages.
+
+**In flight:** none.
 
 - Single-clinic Fortify session (no `{current_team}` / teams)
 - Six `ClinicRole` values on `users.role`; public registration off
-- Admin-only staff create; password min 10; session 30 minutes; Dentist role also provisions an active `dentists` profile for calendar/dropdowns
+- Admin-only staff create; Admin can mark staff active or inactive (inactive cannot log in; Dentist role syncs `dentists.is_active`); password min 10; session 30 minutes; Dentist role also provisions an active `dentists` profile for calendar/dropdowns
 - Brand Golden Smile Dental Clinic; timezone `Africa/Mogadishu`
 - Split login + navy Wave 1 chrome with a live Reports hub (seven Wave 1 reports)
 - Wave 1 tables, models, factories; DCMS fee catalog + working hours seeded; integer cents
-- Patients: register/search/show/update/archive; unique `PAT-{YYYY}-{#####}`; audit on show; Active-only typeahead; archived patients may be permanently deleted (confirm dialog) when they have no invoices/payments
+- Patients: register/search/show/update; unique `PAT-{YYYY}-{#####}`; audit on show; Active-only typeahead; Admin/Receptionist soft-delete a patient and related domain rows (invoices/payments are not force-deleted)
 - Appointments: day calendar from `working_hours`; book/edit/cancel/reschedule/check-in; dentist/chair overlap 422; Friday/outside-hours 422; patient typeahead on book/edit
-- Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only; patient typeahead on create; receptionist can generate an invoice from a completed treatment show
+- Treatments: diagnosis, fee-item procedures, Rx (`RX-…`); complete may set appointment `completed`; Nurse/Receptionist view-only; patient typeahead on create; searchable dentist combobox on record; receptionist can generate an invoice from a completed treatment show
 - Billing: invoice from completed treatment; partial/overpay rules; recorded ZAAD/Sahal/eDahab/MyCash; receipts; Admin/Accountant refunds; Dentist view-only; expenses, daily cash close, payment plans, insurance claim stub, MM recon (Admin/Accountant)
 - Inventory: four cards, search, add, adjust (Admin confirmation); batches + expiry; PO receive; suppliers; expiry alerts; no negative qty; expired consume blocked
 - Dashboard: four role-scoped KPI cards, Mon–Sun weekly visits, recent activity, upcoming today; Lab limited
 - Browser tests (`tests/Browser`, Pest + Playwright): login, dashboard, patients, appointments, treatments, billing, inventory (incl. PO receive / expired consume), staff (incl. dentist appearing on the calendar after staff create), reports, chart/encounters, lab orders, notification templates, imaging orders, Golden Smile named-seed login, nav/UX, plus a full-page smoke (`StaffPagesSmokeTest`) and form-abuse smoke (`FormAbuseSmokeTest`); HTTP feature tests still own 403/validation/abuse matrices (`HttpPageAccessTest`, `FormAbuseTest`, `AuthAbuseTest`, `ModelCatalogTest`, `PickerOptionsTest`)
 
-- Reports: hub + daily appointments, patient registration, outstanding balances, payments (method breakdown), inventory stock, low stock, treatment statistics; date range; Admin/Accountant revenue; Dentist self-scoped clinical stats; Lab no finance
+- Reports: hub + daily appointments, patient registration, outstanding balances, payments (method breakdown), inventory stock, low stock, treatment statistics; date range; Print on hub and each Wave 1 report; Admin/Accountant revenue; Dentist self-scoped clinical stats; Lab no finance
 - Demo seed: named Golden Smile staff/patients (incl. Ahmed Ali `PAT-2026-00001`, Maria Santos), appointments, three SKUs, FEE catalog; generate extras match JSON `kpis` (1,284 active patients, 18 today appts, 7 unpaid invoices, inventory 86 / low 3 / out 1 / $1,482.00). Pest uses named-only seeder. Weekly `fri: 0` holds when seed day is not Friday.
 - Chart: encounter per completed treatment (`ENC-…`); SOAP draft/sign/amendment lock; FDI odontogram + tooth history; treatment plans with item acceptance; Admin/Dentist write; Nurse view; Receptionist 403
 - Lab: `LAB-…` orders with DCMS statuses; Admin/Dentist/Lab CRUD; Receptionist 403; no invoice from lab orders
 - Notifications: DCMS templates (Admin edit); hourly `appointments:queue-reminders` writes `notification.would_send` audit at 48/24/2 hours; no SMS provider
 - Imaging: `IMG-…` orders with result metadata and optional file on the Laravel disk; Admin/Dentist write; Nurse view; Receptionist 403; no DICOM viewer
 
-**Next:** none. Architecture G0–G15 are complete.
+**Next:** none. Architecture G0–G16 are complete.
 
 ---
 
@@ -145,14 +147,16 @@ for the screenshot cards).
 No `reports` table of documents. `activity_logs` for dashboard; `audit_logs` /
 `data_access_logs` for privacy (G2+).
 
-### D7 — Soft-delete / archive; money never physically deleted
+### D7 — Soft-delete; money never physically deleted
 
-Patients: `status` active/inactive/archived + `softDeletes`. Archived is
-read-only for edits. Admin/Receptionist may **permanently delete** an archived
-patient after a confirmation dialog when the patient has **no** invoices or
-payments (`restrictOnDelete` on those FKs). Appointments keep rows
-(`cancelled`, `rescheduled`). Invoices/payments: `cancelled`/`refunded`/
-`written_off`, never hard-deleted.
+Patients: `status` active/inactive + `softDeletes`. Admin/Receptionist **soft-delete**
+a patient and related domain rows (appointments, treatments, prescriptions,
+encounters, lab/imaging, chart, invoices, payments, nested profile data) after a
+confirmation dialog. Soft-deleted patients are omitted from indexes, pickers,
+calendar, and reports. Invoices/payments are never `forceDelete`d
+(`restrictOnDelete` on those FKs). Appointments keep historical rows
+(`cancelled` / `rescheduled`) until the patient is soft-deleted with them.
+Hard-delete / GDPR wipe is out of G16.
 
 ### D8 — Two JSON files
 
@@ -335,7 +339,7 @@ Guests: `/login`, password reset, `/up` only.
 | ------------------------------------- | ----- | ------- | ------------ | ------------- | ---------- | ----------- |
 | Dashboard                             | ✓     | ✓       | ✓            | ✓             | ✓          | ✓ (limited) |
 | Patients view                         | ✓     | ✓       | ✓            | ✓             | —          | —           |
-| Patients write / archive              | ✓     | —       | ✓            | —             | —          | —           |
+| Patients write / delete               | ✓     | —       | ✓            | —             | —          | —           |
 | Appointments view                     | ✓     | ✓       | ✓            | ✓             | —          | —           |
 | Appointments book / cancel / check-in | ✓     | —       | ✓            | check-in only | —          | —           |
 | Treatments / Rx / chart write         | ✓     | ✓       | —            | clinical view | —          | —           |
@@ -695,6 +699,34 @@ Wave 2 reports (cash close, lab, insurance, expiry, audit) land with G10–G15.
 
 ---
 
+### G16 — Clinic ops polish
+
+- **Mode:** A
+- **Why:** patient cascade soft-delete (record ownership) + staff deactivate (login privilege)
+- **Depends on:** G15
+
+- [x] Treatment create dentist control is a searchable combobox over active
+      dentists; staff can type to filter and select; the chosen `dentist_id`
+      is stored on the treatment
+- [x] Admin/Receptionist soft-delete a patient (confirm dialog) with related
+      domain rows; patient disappears from index/search/calendar/billing/
+      clinical indexes and reports; invoices/payments are not force-deleted;
+      Dentist/Nurse 403; guests redirect
+- [x] Admin can mark a staff user active or inactive; inactive users cannot
+      log in; Dentist role syncs `dentists.is_active`; admin cannot deactivate
+      self
+- [x] Reports hub and each Wave 1 report page have a Print control;
+      sidebar/header/filters hide in print
+- [x] Feature tests for combobox store, cascade soft-delete + 403s, staff
+      toggle + inactive login, report print button present
+- [x] Browser tests: record treatment via dentist combobox; delete patient
+      from show dialog; toggle staff inactive; open a report and see Print
+
+**Out of G16:** hard-delete/GDPR wipe; new npm combobox packages; making every
+dentist dropdown in the app searchable.
+
+---
+
 ## 10. Sequencing and modes
 
 ```
@@ -708,9 +740,12 @@ G9 → G10 (A) → G11 (A-light)
 G9 → G12 (A)   [also depends G6]
 G9 → G13 (A)   [also depends G5]
 G3+G5 → G14 (A-light)
+
+Post-wave:
+G15 → G16 (A)
 ```
 
-Do not start Wave 2 until G9 is completed (or user explicitly skips G9).
+Do not start Wave 2 until G9 is completed (or user explicitly skips G9). G16 waits for G15.
 
 **Mode rule:** auth/session, record ownership, money, signed clinical lock → A.
 Shell/seed/reports/templates → A-light.

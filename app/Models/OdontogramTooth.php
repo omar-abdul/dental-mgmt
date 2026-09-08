@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -20,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $updated_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  */
 #[Fillable([
     'patient_id',
@@ -31,7 +33,7 @@ use Illuminate\Support\Carbon;
 class OdontogramTooth extends Model
 {
     /** @use HasFactory<OdontogramToothFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'odontogram_teeth';
 

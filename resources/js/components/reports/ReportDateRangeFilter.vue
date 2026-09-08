@@ -14,7 +14,7 @@ defineProps<{
     <form
         :action="action"
         method="get"
-        class="flex flex-wrap items-end gap-4 rounded-md border p-4"
+        class="flex flex-wrap items-end gap-4 rounded-md border p-4 print:hidden"
         data-test="report-date-filter"
     >
         <div class="space-y-2">

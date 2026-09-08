@@ -53,3 +53,14 @@ test('admin applies a date range on reports hub and sees matching payment total'
         ->assertSee('$25.00')
         ->assertNoJavaScriptErrors();
 });
+
+test('admin sees print button on daily appointments report', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin);
+
+    visit(route('reports.daily-appointments'))
+        ->assertSee('Daily appointments')
+        ->assertPresent('@print-report-button')
+        ->assertNoJavaScriptErrors();
+});

@@ -26,12 +26,11 @@ Route::get('/', function () {
         : redirect()->route('login');
 })->name('home');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('patients/search', [PatientController::class, 'search'])->name('patients.search');
     Route::resource('patients', PatientController::class);
-    Route::post('patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
     Route::get('appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::post('appointments', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::put('appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');

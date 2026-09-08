@@ -17,11 +17,11 @@ withDefaults(defineProps<Props>(), {
 
 <template>
     <AppShell variant="sidebar">
-        <AppSidebar />
+        <AppSidebar class="print:hidden" />
         <AppContent variant="sidebar" class="min-w-0 overflow-x-clip">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" />
+            <AppSidebarHeader class="print:hidden" :breadcrumbs="breadcrumbs" />
             <slot />
         </AppContent>
-        <Toaster />
+        <Toaster class="print:hidden" />
     </AppShell>
 </template>

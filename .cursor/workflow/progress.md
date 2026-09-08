@@ -19,6 +19,14 @@
 
 > Not in-flight work. Do not copy these into root `progress.md`.
 
+### B27 — Reports hub Print wrap (G16 R3)
+- Related findings: R3
+- Status: deferred
+- What's left: Wrap hub `<ReportPrintButton />` (and header actions) in `print:hidden` like Wave 1 child report pages. Sidebar/header/date-filter already hide.
+- Why: Low
+- Expires: 2026-10-08
+- Updated: 2026-09-08
+
 ### B26 — Pest browser multipart file uploads (G15)
 - Related findings: —
 - Status: deferred

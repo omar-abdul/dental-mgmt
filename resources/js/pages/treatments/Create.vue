@@ -4,6 +4,7 @@ import { ref, watch } from 'vue';
 import TreatmentController from '@/actions/App/Http/Controllers/TreatmentController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import LocalCombobox from '@/components/LocalCombobox.vue';
 import PatientPicker, { type PatientSearchResult } from '@/components/PatientPicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ const props = defineProps<{
 }>();
 
 const selectedPatient = ref(props.selectedPatientId?.toString() ?? '');
+const selectedDentist = ref(props.defaultDentistId?.toString() ?? '');
 const procedureCount = ref(1);
 const prescriptionItemCount = ref(1);
 
@@ -117,26 +119,20 @@ defineOptions({
                         :error="errors.patient_id"
                     />
 
-                    <div class="grid gap-2">
-                        <Label for="dentist_id">Dentist</Label>
-                        <select
-                            id="dentist_id"
-                            name="dentist_id"
-                            required
-                            class="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                        >
-                            <option value="">Select dentist</option>
-                            <option
-                                v-for="dentist in dentists"
-                                :key="dentist.id"
-                                :value="dentist.id"
-                                :selected="dentist.id === defaultDentistId"
-                            >
-                                {{ dentist.label }}
-                            </option>
-                        </select>
-                        <InputError :message="errors.dentist_id" />
-                    </div>
+                    <LocalCombobox
+                        id="dentist_id"
+                        v-model="selectedDentist"
+                        name="dentist_id"
+                        label="Dentist"
+                        :options="dentists"
+                        :default-option-id="defaultDentistId"
+                        placeholder="Type to search dentists"
+                        search-data-test="dentist-picker-search"
+                        option-data-test="dentist-picker-option"
+                        :clearable="false"
+                        required
+                        :error="errors.dentist_id"
+                    />
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">

@@ -3,10 +3,12 @@
 use App\Enums\ClinicRole;
 use App\Enums\Gender;
 use App\Enums\PatientStatus;
+use App\Models\Appointment;
 use App\Models\AuditLog;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Payment;
+use App\Models\Treatment;
 use App\Models\User;
 
 function validPatientPayload(array $overrides = []): array
@@ -148,39 +150,61 @@ test('receptionist can update a non archived patient', function () {
     expect($patient->updated_by)->toBe($receptionist->id);
 });
 
-test('receptionist can archive a patient and archived patients are read only', function () {
+test('receptionist can soft delete a patient and related records', function () {
+    $receptionist = User::factory()->receptionist()->create();
+    $patient = Patient::factory()->create();
+    $appointment = Appointment::factory()->forPatient($patient)->create();
+    $treatment = Treatment::factory()->forPatient($patient)->create();
+    $invoice = Invoice::factory()->forPatient($patient)->create();
+    $payment = Payment::factory()->forInvoice($invoice)->create(['patient_id' => $patient->id]);
+
+    $this->actingAs($receptionist)
+        ->delete(route('patients.destroy', $patient))
+        ->assertRedirect(route('patients.index'));
+
+    expect($patient->fresh()->trashed())->toBeTrue();
+    expect(Appointment::withTrashed()->find($appointment->id)?->trashed())->toBeTrue();
+    expect(Treatment::withTrashed()->find($treatment->id)?->trashed())->toBeTrue();
+    expect(Invoice::withTrashed()->find($invoice->id)?->trashed())->toBeTrue();
+    expect(Payment::withTrashed()->find($payment->id)?->trashed())->toBeTrue();
+    expect(Invoice::withTrashed()->find($invoice->id))->not->toBeNull();
+    expect(Payment::withTrashed()->find($payment->id))->not->toBeNull();
+
+    $this->assertDatabaseHas('audit_logs', [
+        'action' => 'patient.deleted',
+        'auditable_type' => Patient::class,
+        'auditable_id' => $patient->id,
+        'user_id' => $receptionist->id,
+    ]);
+});
+
+test('deleted patient show exposes canDelete false and update forbidden', function () {
     $receptionist = User::factory()->receptionist()->create();
     $patient = Patient::factory()->create();
 
     $this->actingAs($receptionist)
-        ->post(route('patients.archive', $patient))
-        ->assertRedirect(route('patients.show', $patient));
-
-    $patient->refresh();
-
-    expect($patient->status)->toBe(PatientStatus::Archived);
-    expect($patient->trashed())->toBeTrue();
+        ->delete(route('patients.destroy', $patient))
+        ->assertRedirect(route('patients.index'));
 
     $this->actingAs($receptionist)
         ->get(route('patients.show', $patient))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('patients/Show')
-            ->where('patient.is_archived', true)
             ->where('canUpdate', false)
-            ->where('canArchive', false)
-            ->where('canDelete', true));
-
-    $this->actingAs($receptionist)
-        ->get(route('patients.edit', $patient))
-        ->assertForbidden();
+            ->where('canDelete', false));
 
     $this->actingAs($receptionist)
         ->patch(route('patients.update', $patient), validPatientPayload())
         ->assertForbidden();
+});
+
+test('already deleted patient destroy returns forbidden', function () {
+    $receptionist = User::factory()->receptionist()->create();
+    $patient = Patient::factory()->archived()->create();
 
     $this->actingAs($receptionist)
-        ->post(route('patients.archive', $patient))
+        ->delete(route('patients.destroy', $patient))
         ->assertForbidden();
 });
 
@@ -239,7 +263,7 @@ test('duplicate warning includes soft deleted patients', function () {
         ->assertSessionHasErrors('duplicate');
 });
 
-test('dentist and nurse cannot create or archive patients', function (ClinicRole $role) {
+test('dentist and nurse cannot create or delete patients', function (ClinicRole $role) {
     $user = User::factory()->role($role)->create();
     $patient = Patient::factory()->create();
 
@@ -250,7 +274,7 @@ test('dentist and nurse cannot create or archive patients', function (ClinicRole
         ->assertForbidden();
 
     $this->actingAs($user)
-        ->post(route('patients.archive', $patient))
+        ->delete(route('patients.destroy', $patient))
         ->assertForbidden();
 })->with([
     'dentist' => ClinicRole::Dentist,
@@ -433,12 +457,12 @@ test('nurse cannot update patients', function () {
         ->assertForbidden();
 });
 
-test('index search finds archived patients by patient number', function () {
+test('index search omits soft deleted patients', function () {
     $receptionist = User::factory()->receptionist()->create();
 
-    $archived = Patient::factory()->archived()->create([
+    $deleted = Patient::factory()->archived()->create([
         'patient_number' => 'PAT-2026-77777',
-        'first_name' => 'Archived',
+        'first_name' => 'Deleted',
         'last_name' => 'Patient',
     ]);
 
@@ -447,9 +471,9 @@ test('index search finds archived patients by patient number', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('patients/Index')
-            ->has('patients.data', 1)
-            ->where('patients.data.0.id', $archived->id)
-            ->where('patients.data.0.is_archived', true));
+            ->has('patients.data', 0));
+
+    expect($deleted->trashed())->toBeTrue();
 });
 
 test('patient search matches name patient number phone and email', function () {
@@ -584,93 +608,51 @@ test('update preserves is_critical on medical items when form omits the flag', f
     expect($allergy->fresh()->is_critical)->toBeTrue();
 });
 
-test('receptionist can permanently delete archived patient without invoices', function () {
+test('deleted patient appointments are omitted from calendar index', function () {
     $receptionist = User::factory()->receptionist()->create();
-    $patient = Patient::factory()->archived()->create([
-        'first_name' => 'Delete',
-        'last_name' => 'Me',
-    ]);
+    $patient = Patient::factory()->create(['first_name' => 'Calendar', 'last_name' => 'Hidden']);
+    $appointment = Appointment::factory()->forPatient($patient)->create();
 
     $this->actingAs($receptionist)
         ->delete(route('patients.destroy', $patient))
         ->assertRedirect(route('patients.index'));
 
-    expect(Patient::withTrashed()->find($patient->id))->toBeNull();
+    $this->actingAs($receptionist)
+        ->get(route('appointments.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('appointments/Index')
+            ->where('appointments', fn ($appointments) => collect($appointments)
+                ->pluck('id')
+                ->doesntContain($appointment->id)));
 
-    $this->assertDatabaseHas('audit_logs', [
-        'action' => 'patient.deleted',
-        'auditable_type' => Patient::class,
-        'auditable_id' => $patient->id,
-        'user_id' => $receptionist->id,
-    ]);
+    expect(Appointment::withTrashed()->find($appointment->id)?->trashed())->toBeTrue();
 });
 
-test('admin can permanently delete archived patient without invoices', function () {
-    $admin = User::factory()->admin()->create();
-    $patient = Patient::factory()->archived()->create();
-
-    $this->actingAs($admin)
-        ->delete(route('patients.destroy', $patient))
-        ->assertRedirect(route('patients.index'));
-
-    expect(Patient::withTrashed()->find($patient->id))->toBeNull();
-});
-
-test('active patient cannot be permanently deleted', function () {
+test('deleted patient invoices are omitted from billing index', function () {
     $receptionist = User::factory()->receptionist()->create();
     $patient = Patient::factory()->create();
-
-    $this->actingAs($receptionist)
-        ->delete(route('patients.destroy', $patient))
-        ->assertForbidden();
-
-    expect(Patient::query()->find($patient->id))->not->toBeNull();
-});
-
-test('archived patient with invoice cannot be permanently deleted', function () {
-    $receptionist = User::factory()->receptionist()->create();
-    $patient = Patient::factory()->archived()->create();
-    Invoice::factory()->forPatient($patient)->create();
-
-    $this->actingAs($receptionist)
-        ->get(route('patients.show', $patient))
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('patients/Show')
-            ->where('canDelete', false));
-
-    $this->actingAs($receptionist)
-        ->from(route('patients.show', $patient))
-        ->delete(route('patients.destroy', $patient))
-        ->assertSessionHasErrors('patient');
-
-    expect(Patient::withTrashed()->find($patient->id))->not->toBeNull();
-});
-
-test('archived patient with payment cannot be permanently deleted', function () {
-    $receptionist = User::factory()->receptionist()->create();
-    $patient = Patient::factory()->archived()->create();
     $invoice = Invoice::factory()->forPatient($patient)->create();
-    Payment::factory()->forInvoice($invoice)->create();
 
     $this->actingAs($receptionist)
-        ->get(route('patients.show', $patient))
+        ->delete(route('patients.destroy', $patient))
+        ->assertRedirect(route('patients.index'));
+
+    $this->actingAs($receptionist)
+        ->get(route('billing.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('patients/Show')
-            ->where('canDelete', false));
+            ->component('billing/Index')
+            ->where('invoices.data', fn ($invoices) => collect($invoices)
+                ->pluck('id')
+                ->doesntContain($invoice->id)));
 
-    $this->actingAs($receptionist)
-        ->from(route('patients.show', $patient))
-        ->delete(route('patients.destroy', $patient))
-        ->assertSessionHasErrors('patient');
-
-    expect(Patient::withTrashed()->find($patient->id))->not->toBeNull();
+    expect(Invoice::withTrashed()->find($invoice->id)?->trashed())->toBeTrue();
 });
 
-test('archived patient without billing records exposes canDelete on show', function () {
+test('active patient show exposes canDelete for write roles', function () {
     $receptionist = User::factory()->receptionist()->create();
-    $patient = Patient::factory()->archived()->create();
+    $patient = Patient::factory()->create();
 
     $this->actingAs($receptionist)
         ->get(route('patients.show', $patient))
@@ -680,15 +662,22 @@ test('archived patient without billing records exposes canDelete on show', funct
             ->where('canDelete', true));
 });
 
-test('dentist and nurse cannot permanently delete archived patients', function (ClinicRole $role) {
+test('guest is redirected when deleting a patient', function () {
+    $patient = Patient::factory()->create();
+
+    $this->delete(route('patients.destroy', $patient))
+        ->assertRedirectToRoute('login');
+});
+
+test('dentist and nurse cannot delete patients', function (ClinicRole $role) {
     $user = User::factory()->role($role)->create();
-    $patient = Patient::factory()->archived()->create();
+    $patient = Patient::factory()->create();
 
     $this->actingAs($user)
         ->delete(route('patients.destroy', $patient))
         ->assertForbidden();
 
-    expect(Patient::withTrashed()->find($patient->id))->not->toBeNull();
+    expect(Patient::query()->find($patient->id))->not->toBeNull();
 })->with([
     'dentist' => ClinicRole::Dentist,
     'nurse' => ClinicRole::Nurse,

@@ -14,7 +14,6 @@ type PatientListItem = {
     phone: string;
     email: string | null;
     status: string;
-    is_archived: boolean;
 };
 
 type PaginatedPatients = {
@@ -91,12 +90,6 @@ defineOptions({
                             >
                                 {{ patient.patient_number }}
                             </Link>
-                            <span
-                                v-if="patient.is_archived"
-                                class="bg-muted text-muted-foreground ml-2 inline-flex rounded px-1.5 py-0.5 text-xs font-medium"
-                            >
-                                Archived
-                            </span>
                         </td>
                         <td class="px-4 py-3">{{ patient.full_name }}</td>
                         <td class="px-4 py-3">{{ patient.phone }}</td>

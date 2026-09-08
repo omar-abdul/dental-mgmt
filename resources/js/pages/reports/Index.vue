@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import ReportDateRangeFilter from '@/components/reports/ReportDateRangeFilter.vue';
+import ReportPrintButton from '@/components/reports/ReportPrintButton.vue';
 import Heading from '@/components/Heading.vue';
 import {
     Card,
@@ -86,11 +87,14 @@ defineOptions({
     <Head title="Reports" />
 
     <div class="space-y-6">
-        <Heading
-            variant="small"
-            title="Reports"
-            description="Wave 1 operational and finance reports"
-        />
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <Heading
+                variant="small"
+                title="Reports"
+                description="Wave 1 operational and finance reports"
+            />
+            <ReportPrintButton />
+        </div>
 
         <ReportDateRangeFilter
             :action="reportsIndex().url"

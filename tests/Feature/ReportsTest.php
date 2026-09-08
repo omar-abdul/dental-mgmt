@@ -386,3 +386,26 @@ test('dentist daily appointments report is scoped to their schedule', function (
         ->assertInertia(fn ($page) => $page
             ->where('report.total', 1));
 });
+
+test('wave 1 report pages include a print control', function (string $route, string $component, string $vuePage) {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route($route, reportsDateRange()))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component($component));
+
+    expect(file_get_contents(resource_path('js/pages/reports/'.$vuePage)))
+        ->toContain('<ReportPrintButton');
+    expect(file_get_contents(resource_path('js/components/reports/ReportPrintButton.vue')))
+        ->toContain('data-test="print-report-button"');
+})->with([
+    'hub' => ['reports.index', 'reports/Index', 'Index.vue'],
+    'daily appointments' => ['reports.daily-appointments', 'reports/DailyAppointments', 'DailyAppointments.vue'],
+    'patient registration' => ['reports.patient-registration', 'reports/PatientRegistration', 'PatientRegistration.vue'],
+    'outstanding' => ['reports.outstanding-balances', 'reports/OutstandingBalances', 'OutstandingBalances.vue'],
+    'payments' => ['reports.payments', 'reports/Payments', 'Payments.vue'],
+    'inventory stock' => ['reports.inventory-stock', 'reports/InventoryStock', 'InventoryStock.vue'],
+    'low stock' => ['reports.low-stock', 'reports/LowStock', 'LowStock.vue'],
+    'treatment statistics' => ['reports.treatment-statistics', 'reports/TreatmentStatistics', 'TreatmentStatistics.vue'],
+]);

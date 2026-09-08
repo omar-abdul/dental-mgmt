@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\Gender;
-use App\Models\AuditLog;
+use App\Models\Appointment;
+use App\Models\Invoice;
 use App\Models\Patient;
+use App\Models\Treatment;
 use App\Models\User;
 
 test('receptionist can register a patient from the form and see the record', function () {
@@ -34,7 +36,7 @@ test('receptionist can register a patient from the form and see the record', fun
         ->and($patient->patient_number)->toMatch('/^PAT-\d{4}-\d{5}$/');
 });
 
-test('receptionist can search show and archive a patient', function () {
+test('receptionist can search show and delete a patient', function () {
     $receptionist = User::factory()->receptionist()->create();
     $patient = Patient::factory()->create([
         'first_name' => 'Ahmed',
@@ -42,6 +44,9 @@ test('receptionist can search show and archive a patient', function () {
         'patient_number' => 'PAT-2026-00001',
         'phone' => '+252619998877',
     ]);
+    $appointment = Appointment::factory()->forPatient($patient)->create();
+    $treatment = Treatment::factory()->forPatient($patient)->create();
+    $invoice = Invoice::factory()->forPatient($patient)->create();
 
     $this->actingAs($receptionist);
 
@@ -54,34 +59,15 @@ test('receptionist can search show and archive a patient', function () {
         ->click('PAT-2026-00001')
         ->assertSee('Ahmed Ali')
         ->assertSee('+252619998877')
-        ->click('@archive-patient-button')
-        ->assertSee('This patient is archived and read-only.')
-        ->assertNoJavaScriptErrors();
-
-    expect($patient->fresh()->trashed())->toBeTrue();
-    expect(AuditLog::query()->where('action', 'patient.viewed')->count())->toBeGreaterThan(0);
-});
-
-test('receptionist can permanently delete archived patient from show dialog', function () {
-    $receptionist = User::factory()->receptionist()->create();
-    $patient = Patient::factory()->create([
-        'first_name' => 'Delete',
-        'last_name' => 'Target',
-        'patient_number' => 'PAT-2026-00099',
-    ]);
-
-    $this->actingAs($receptionist);
-
-    $page = visit(route('patients.show', $patient));
-
-    $page->click('@archive-patient-button')
-        ->assertSee('This patient is archived and read-only.')
         ->click('@delete-patient-button')
         ->click('@confirm-delete-patient-button')
         ->assertSee('No patients found.')
         ->assertNoJavaScriptErrors();
 
-    expect(Patient::withTrashed()->find($patient->id))->toBeNull();
+    expect($patient->fresh()->trashed())->toBeTrue();
+    expect(Appointment::withTrashed()->find($appointment->id)?->trashed())->toBeTrue();
+    expect(Treatment::withTrashed()->find($treatment->id)?->trashed())->toBeTrue();
+    expect(Invoice::withTrashed()->find($invoice->id)?->trashed())->toBeTrue();
 
     $this->assertDatabaseHas('audit_logs', [
         'action' => 'patient.deleted',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import ReportDateRangeFilter from '@/components/reports/ReportDateRangeFilter.vue';
+import ReportPrintButton from '@/components/reports/ReportPrintButton.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -67,9 +68,12 @@ defineOptions({
                 title="Treatment statistics"
                 description="Treatment counts and procedure activity"
             />
-            <Link :href="reportsIndex({ query: filters })" class="text-primary text-sm hover:underline">
-                Back to reports
-            </Link>
+            <div class="flex items-center gap-3 print:hidden">
+                <Link :href="reportsIndex({ query: filters })" class="text-primary text-sm hover:underline">
+                    Back to reports
+                </Link>
+                <ReportPrintButton />
+            </div>
         </div>
 
         <ReportDateRangeFilter
