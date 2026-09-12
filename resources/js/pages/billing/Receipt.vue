@@ -33,6 +33,10 @@ const props = defineProps<{
     receipt: ReceiptDetail;
 }>();
 
+function printReceipt(): void {
+    window.print();
+}
+
 defineOptions({
     layout: {
         breadcrumbs: [],
@@ -48,7 +52,7 @@ defineOptions({
             <Button as-child variant="outline">
                 <Link :href="billingIndex()">Back to billing</Link>
             </Button>
-            <Button @click="() => window.print()">Print receipt</Button>
+            <Button type="button" @click="printReceipt">Print receipt</Button>
         </div>
 
         <article class="space-y-6 rounded-md border p-8 print:border-0 print:p-0">

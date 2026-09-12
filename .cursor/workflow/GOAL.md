@@ -1,5 +1,5 @@
-# GOAL — idle
+# GOAL
 
-No architecture G-id or `/goal-workflow` run is in flight.
+Idle. Last completed: report print layout (2026-09-12).
 
-Last completed: **G16 Clinic ops polish** (2026-09-08, Mode A).
+No active architecture goal. Per-run residue: `.cursor/workflow/progress.md` Backlog (B28–B30).

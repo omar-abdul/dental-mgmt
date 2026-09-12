@@ -161,6 +161,25 @@ test('lab role can view lab index with create permission', function () {
             ->where('canCreate', true));
 });
 
+test('lab create preloads the selected patient for the picker', function () {
+    $labUser = User::factory()->lab()->create();
+    $patient = Patient::factory()->create([
+        'first_name' => 'Amina',
+        'last_name' => 'Hassan',
+        'phone' => '+252611110000',
+    ]);
+
+    $this->actingAs($labUser)
+        ->get(route('lab.create', ['patient_id' => $patient->id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('lab/Create')
+            ->where('selectedPatientId', $patient->id)
+            ->where('selectedPatient.id', $patient->id)
+            ->where('selectedPatient.phone', $patient->phone)
+            ->where('selectedPatient.full_name', 'Amina Hassan'));
+});
+
 test('lab module appears in allowed modules for authorized roles only', function (ClinicRole $role, bool $canView) {
     expect($role->canViewModule('lab'))->toBe($canView);
 })->with([

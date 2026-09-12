@@ -31,7 +31,15 @@ const props = defineProps<{
 
 const selectedPatient = ref(props.selectedPatientId?.toString() ?? '');
 
-watch(selectedPatient, (patientId) => {
+watch(selectedPatient, (patientId, previousPatientId) => {
+    if (patientId === previousPatientId) {
+        return;
+    }
+
+    if (patientId === '' && (previousPatientId === '' || previousPatientId === undefined)) {
+        return;
+    }
+
     router.get(
         imagingCreate.url({ query: patientId ? { patient_id: patientId } : {} }),
         {},

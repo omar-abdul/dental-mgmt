@@ -16,10 +16,23 @@ defineProps<{
         class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0"
     >
         <div
-            class="relative hidden h-full flex-col justify-between p-10 text-white lg:flex"
+            class="relative hidden h-full flex-col justify-between overflow-hidden p-10 text-white lg:flex"
+            data-test="login-brand-panel"
             style="background-color: hsl(222 47% 11%)"
         >
-            <div class="relative z-20 flex items-center gap-3 text-lg font-medium">
+            <img
+                src="/golden-smile.jpg"
+                alt=""
+                aria-hidden="true"
+                data-test="login-hero"
+                class="pointer-events-none absolute inset-0 size-full object-cover"
+            />
+            <div
+                class="absolute inset-0 bg-gradient-to-b from-[hsl(222_47%_11%/80%)] via-[hsl(222_47%_11%/55%)] to-[hsl(222_47%_11%/80%)] backdrop-blur-[2px]"
+            />
+            <div
+                class="relative z-20 flex items-center gap-3 text-lg font-medium"
+            >
                 <AppLogoIcon class="size-10" />
                 <span>{{ name }}</span>
             </div>
@@ -29,7 +42,9 @@ defineProps<{
                 </p>
             </div>
         </div>
-        <div class="flex h-full flex-col bg-white lg:p-8">
+        <div
+            class="auth-split-form flex h-full flex-col bg-white text-neutral-950 lg:p-8 [&_[data-slot=input]]:bg-white [&_[data-slot=input]]:text-neutral-950 [&_[data-slot=input]]:dark:bg-white"
+        >
             <div
                 class="mx-auto flex w-full flex-1 flex-col justify-center space-y-6 sm:w-[400px]"
             >

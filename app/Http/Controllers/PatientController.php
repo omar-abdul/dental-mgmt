@@ -27,7 +27,7 @@ class PatientController extends Controller
 {
     public function search(Request $request): JsonResponse
     {
-        Gate::authorize('viewAny', Patient::class);
+        Gate::authorize('search', Patient::class);
 
         $search = trim((string) $request->query('q', ''));
 

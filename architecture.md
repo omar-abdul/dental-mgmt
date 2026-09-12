@@ -71,7 +71,7 @@ and the `playwright` npm package (staff UI E2E).
 
 ## 3. Current state
 
-**Shipped:** G0–G16 (clinic foundation through imaging orders, plus clinic ops polish) and Pest Playwright browser coverage for those pages.
+**Shipped:** G0–G17 (clinic foundation through imaging orders, clinic ops polish, and lab-order patient picker) and Pest Playwright browser coverage for those pages.
 
 **In flight:** none.
 
@@ -79,7 +79,7 @@ and the `playwright` npm package (staff UI E2E).
 - Six `ClinicRole` values on `users.role`; public registration off
 - Admin-only staff create; Admin can mark staff active or inactive (inactive cannot log in; Dentist role syncs `dentists.is_active`); password min 10; session 30 minutes; Dentist role also provisions an active `dentists` profile for calendar/dropdowns
 - Brand Golden Smile Dental Clinic; timezone `Africa/Mogadishu`
-- Split login + navy Wave 1 chrome with a live Reports hub (seven Wave 1 reports)
+- Split login (clinic photo under a navy backdrop on the brand panel; light-theme form fields) + navy Wave 1 chrome with a live Reports hub (seven Wave 1 reports)
 - Wave 1 tables, models, factories; DCMS fee catalog + working hours seeded; integer cents
 - Patients: register/search/show/update; unique `PAT-{YYYY}-{#####}`; audit on show; Active-only typeahead; Admin/Receptionist soft-delete a patient and related domain rows (invoices/payments are not force-deleted)
 - Appointments: day calendar from `working_hours`; book/edit/cancel/reschedule/check-in; dentist/chair overlap 422; Friday/outside-hours 422; patient typeahead on book/edit
@@ -89,14 +89,14 @@ and the `playwright` npm package (staff UI E2E).
 - Dashboard: four role-scoped KPI cards, Mon–Sun weekly visits, recent activity, upcoming today; Lab limited
 - Browser tests (`tests/Browser`, Pest + Playwright): login, dashboard, patients, appointments, treatments, billing, inventory (incl. PO receive / expired consume), staff (incl. dentist appearing on the calendar after staff create), reports, chart/encounters, lab orders, notification templates, imaging orders, Golden Smile named-seed login, nav/UX, plus a full-page smoke (`StaffPagesSmokeTest`) and form-abuse smoke (`FormAbuseSmokeTest`); HTTP feature tests still own 403/validation/abuse matrices (`HttpPageAccessTest`, `FormAbuseTest`, `AuthAbuseTest`, `ModelCatalogTest`, `PickerOptionsTest`)
 
-- Reports: hub + daily appointments, patient registration, outstanding balances, payments (method breakdown), inventory stock, low stock, treatment statistics; date range; Print on hub and each Wave 1 report; Admin/Accountant revenue; Dentist self-scoped clinical stats; Lab no finance
+- Reports: hub + daily appointments, patient registration, outstanding balances, payments (method breakdown), inventory stock, low stock, treatment statistics; date range; Print on hub and each Wave 1 report (sidebar including layout gap, header, filters, and Print controls hide; full-width light page); Admin/Accountant revenue; Dentist self-scoped clinical stats; Lab no finance
 - Demo seed: named Golden Smile staff/patients (incl. Ahmed Ali `PAT-2026-00001`, Maria Santos), appointments, three SKUs, FEE catalog; generate extras match JSON `kpis` (1,284 active patients, 18 today appts, 7 unpaid invoices, inventory 86 / low 3 / out 1 / $1,482.00). Pest uses named-only seeder. Weekly `fri: 0` holds when seed day is not Friday.
 - Chart: encounter per completed treatment (`ENC-…`); SOAP draft/sign/amendment lock; FDI odontogram + tooth history; treatment plans with item acceptance; Admin/Dentist write; Nurse view; Receptionist 403
-- Lab: `LAB-…` orders with DCMS statuses; Admin/Dentist/Lab CRUD; Receptionist 403; no invoice from lab orders
+- Lab: `LAB-…` orders with DCMS statuses; Admin/Dentist/Lab CRUD; Receptionist 403; no invoice from lab orders; New order uses a visible patient typeahead; Lab may search patients for that picker only (not the Patients module)
 - Notifications: DCMS templates (Admin edit); hourly `appointments:queue-reminders` writes `notification.would_send` audit at 48/24/2 hours; no SMS provider
 - Imaging: `IMG-…` orders with result metadata and optional file on the Laravel disk; Admin/Dentist write; Nurse view; Receptionist 403; no DICOM viewer
 
-**Next:** none. Architecture G0–G16 are complete.
+**Next:** none. Architecture G0–G17 are complete.
 
 ---
 
@@ -370,7 +370,7 @@ Wave 2 adds: Chart, Lab, Imaging, Expenses when those G-ids ship.
 
 | Screen       | Must show (adapted to DCMS)                                                                                                                                                                 |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Login        | Split navy/white; GS brand; Welcome Back; email + password; Remember me; Forgot password; LOG IN; roles Admin · Dentist · Receptionist · Nurse · Accountant · Lab; copyright year = current |
+| Login        | Split navy/white; clinic photo + navy backdrop on brand panel; GS brand; Welcome Back; light email + password fields; Remember me; Forgot password; LOG IN; roles Admin · Dentist · Receptionist · Nurse · Accountant · Lab; copyright year = current |
 | Dashboard    | Overview; user chip; 4 KPI cards; weekly visits; recent activity; upcoming today                                                                                                            |
 | Patient form | First name*, Last name*, DOB*, gender*, phone*; address/occupation/email optional; medical history + emergency contact; Cancel + Save                                                       |
 | Calendar     | Day grid clinic hours (not Friday); columns dentist — room; cards name + fee/procedure + color; statuses scheduled/confirmed/…                                                              |
@@ -727,6 +727,24 @@ dentist dropdown in the app searchable.
 
 ---
 
+### G17 — Lab order patient picker
+
+- **Mode:** A
+- **Why:** Lab picker search returns patient identity (authz)
+- **Depends on:** G16
+
+- [x] New lab order patient field is a visible typeahead; typed query is
+      visible; matching patients can be selected
+- [x] Lab role may `GET patients.search` for the picker; Lab still 403 on
+      patients index/show; accountant 403 on search
+- [x] Feature tests: Lab search 200, Lab index 403, store with selected patient
+- [x] Browser test: type in the picker, see the patient, create the order,
+      `patient_id` persisted
+
+**Out of G17:** Patients module for Lab; other lab dropdowns as comboboxes.
+
+---
+
 ## 10. Sequencing and modes
 
 ```
@@ -743,6 +761,7 @@ G3+G5 → G14 (A-light)
 
 Post-wave:
 G15 → G16 (A)
+G16 → G17 (A)
 ```
 
 Do not start Wave 2 until G9 is completed (or user explicitly skips G9). G16 waits for G15.

@@ -93,7 +93,9 @@ defineOptions({
                 title="Reports"
                 description="Wave 1 operational and finance reports"
             />
-            <ReportPrintButton />
+            <div class="flex items-center gap-3 print:hidden">
+                <ReportPrintButton />
+            </div>
         </div>
 
         <ReportDateRangeFilter

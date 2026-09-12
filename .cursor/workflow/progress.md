@@ -19,10 +19,26 @@
 
 > Not in-flight work. Do not copy these into root `progress.md`.
 
-### B27 — Reports hub Print wrap (G16 R3)
-- Related findings: R3
+### B30 — PatientPicker label `for` when selected (G17 R6)
+- Related findings: R6
 - Status: deferred
-- What's left: Wrap hub `<ReportPrintButton />` (and header actions) in `print:hidden` like Wave 1 child report pages. Sidebar/header/date-filter already hide.
+- What's left: Associate the Patient label with the selected chip or Clear button when a patient is chosen (`:for` is currently undefined).
+- Why: Low
+- Expires: 2026-10-08
+- Updated: 2026-09-08
+
+### B29 — Duplicated picker payload helper (G17 R5)
+- Related findings: R5
+- Status: deferred
+- What's left: Share `{ id, label, patient_number, full_name, phone }` mapping between `PatientController::patientSearchResult` and `LabOrderController::patientPickerPayload`.
+- Why: Low
+- Expires: 2026-10-08
+- Updated: 2026-09-08
+
+### B28 — Architecture Lab `patients.search` row (G17 R4)
+- Related findings: R4
+- Status: deferred
+- What's left: Add a §6 capability row for patient picker search (`patients.search`) with Lab ✓; Patients module (index/show) remains — for Lab.
 - Why: Low
 - Expires: 2026-10-08
 - Updated: 2026-09-08

@@ -64,3 +64,29 @@ test('admin sees print button on daily appointments report', function () {
         ->assertPresent('@print-report-button')
         ->assertNoJavaScriptErrors();
 });
+
+test('admin sees print button on the reports hub', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin);
+
+    visit(route('reports.index'))
+        ->assertSee('Reports')
+        ->assertPresent('@print-report-button')
+        ->assertNoJavaScriptErrors();
+});
+
+test('clicking print report calls the browser print dialog', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin);
+
+    $page = visit(route('reports.daily-appointments'));
+
+    $page->assertPresent('@print-report-button');
+    $page->script('window.__printed = false; window.print = () => { window.__printed = true; }');
+    $page->click('@print-report-button');
+
+    expect($page->script('window.__printed'))->toBeTrue();
+    $page->assertNoJavaScriptErrors();
+});

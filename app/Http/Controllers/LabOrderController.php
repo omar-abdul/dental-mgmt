@@ -72,12 +72,9 @@ class LabOrderController extends Controller
             'encounters' => $this->encounterOptions($selectedPatientId),
             'defaultDentistId' => $user?->dentist?->id,
             'selectedPatientId' => $selectedPatientId,
-            'selectedPatient' => $selectedPatient !== null ? [
-                'id' => $selectedPatient->id,
-                'label' => "{$selectedPatient->first_name} {$selectedPatient->last_name} ({$selectedPatient->patient_number})",
-                'patient_number' => $selectedPatient->patient_number,
-                'full_name' => "{$selectedPatient->first_name} {$selectedPatient->last_name}",
-            ] : null,
+            'selectedPatient' => $selectedPatient !== null
+                ? $this->patientPickerPayload($selectedPatient)
+                : null,
         ]);
     }
 
@@ -264,5 +261,19 @@ class LabOrderController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array{id: int, label: string, patient_number: string, full_name: string, phone: string}
+     */
+    private function patientPickerPayload(Patient $patient): array
+    {
+        return [
+            'id' => $patient->id,
+            'label' => "{$patient->first_name} {$patient->last_name} ({$patient->patient_number})",
+            'patient_number' => $patient->patient_number,
+            'full_name' => "{$patient->first_name} {$patient->last_name}",
+            'phone' => $patient->phone,
+        ];
     }
 }

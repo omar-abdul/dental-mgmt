@@ -565,16 +565,36 @@ test('patient search omits archived patients', function () {
         ->assertJsonPath('patients.0.id', $active->id);
 });
 
-test('accountant and lab cannot search patients', function (ClinicRole $role) {
-    $user = User::factory()->role($role)->create();
+test('accountant cannot search patients', function () {
+    $accountant = User::factory()->accountant()->create();
 
-    $this->actingAs($user)
+    $this->actingAs($accountant)
         ->getJson(route('patients.search', ['q' => 'Maria']))
         ->assertForbidden();
-})->with([
-    'accountant' => ClinicRole::Accountant,
-    'lab' => ClinicRole::Lab,
-]);
+});
+
+test('lab can search patients for the order picker without patients module access', function () {
+    $labUser = User::factory()->lab()->create();
+    $patient = Patient::factory()->create([
+        'first_name' => 'Maria',
+        'last_name' => 'Santos',
+        'patient_number' => 'PAT-2026-00042',
+    ]);
+
+    $this->actingAs($labUser)
+        ->getJson(route('patients.search', ['q' => 'Maria']))
+        ->assertOk()
+        ->assertJsonCount(1, 'patients')
+        ->assertJsonPath('patients.0.id', $patient->id);
+
+    $this->actingAs($labUser)
+        ->get(route('patients.index'))
+        ->assertForbidden();
+
+    $this->actingAs($labUser)
+        ->get(route('patients.show', $patient))
+        ->assertForbidden();
+});
 
 test('guest is redirected to login when searching patients', function () {
     $this->get(route('patients.search', ['q' => 'Maria']))

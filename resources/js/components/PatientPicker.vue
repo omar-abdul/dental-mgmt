@@ -41,6 +41,7 @@ const emit = defineEmits<{
 }>();
 
 const inputId = computed(() => props.id);
+const searchInputId = computed(() => `${inputId.value}_search`);
 const selectedPatient = ref<PatientSearchResult | null>(props.selected);
 const query = ref('');
 const results = ref<PatientSearchResult[]>([]);
@@ -128,6 +129,10 @@ function runSearch(value: string): void {
         preserveState: true,
         preserveScroll: true,
         onSuccess: (response) => {
+            if (trimmed !== query.value.trim()) {
+                return;
+            }
+
             const payload = response as { patients?: PatientSearchResult[] };
             results.value = payload.patients ?? [];
             isOpen.value = true;
@@ -140,7 +145,6 @@ function onInput(value: string | number): void {
     const nextValue = String(value);
     query.value = nextValue;
     selectedPatient.value = null;
-    emit('update:modelValue', '');
     scheduleSearch(nextValue);
 }
 
@@ -196,14 +200,15 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="grid gap-2">
-        <Label :for="inputId">{{ label }}</Label>
+        <Label :for="hasSelection ? undefined : searchInputId">{{ label }}</Label>
 
         <input
             type="hidden"
-            :id="inputId"
             :name="name"
             :value="selectedPatient?.id ?? ''"
             :required="required"
+            tabindex="-1"
+            autocomplete="off"
         />
 
         <div v-if="hasSelection" class="flex items-center gap-2">
@@ -219,7 +224,7 @@ onBeforeUnmount(() => {
 
         <div v-else class="relative">
             <Input
-                :id="`${inputId}_search`"
+                :id="searchInputId"
                 :model-value="query"
                 type="search"
                 autocomplete="off"

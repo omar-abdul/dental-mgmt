@@ -12,6 +12,7 @@ test('staff can log in from the split login page and reach the dashboard', funct
 
     $page->assertSee('Username or Email')
         ->assertSee('Admin · Dentist · Receptionist · Nurse · Accountant · Lab')
+        ->assertPresent('@login-hero')
         ->assertDontSee('Sign up')
         ->fill('email', $user->email)
         ->fill('password', 'password12')

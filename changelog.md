@@ -1,6 +1,30 @@
 # Changelog
 
-Completed architecture goals (G0–G16) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
+Completed architecture goals (G0–G17) and substantial scaffolding. Per-run Corrector notes live in `.cursor/workflow/CHANGELOG.md`.
+
+## 2026-09-12 — Report print layout
+
+Printing a Wave 1 report now drops the sidebar (including its width gap), header, date filters, and Print controls. The page is full-width with light paper and dark text even when the document is in dark appearance.
+
+- **Verified:** `./vendor/bin/sail npm run build`. `./vendor/bin/sail artisan test --compact tests/Feature/ReportsTest.php tests/Browser/ReportsTest.php` — 35 passed. Print media: daily appointments, hub, and payments — no chrome, white page, tables fully laid out (`html.dark`). Follow-up: Print click called `window.print()` from script (template `window` was undefined); browser test stubs `print` and clicks.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none. Ask for a full `./vendor/bin/sail artisan test --compact` suite run.
+
+## 2026-09-12 — Login clinic photo and light form fields
+
+Split login navy panel uses `public/golden-smile.jpg` under a navy/blur backdrop. Auth form pane forces light tokens so email/password fields stay solid white with dark text when the document is in dark appearance.
+
+- **Verified:** `./vendor/bin/sail npm run build`. `./vendor/bin/sail artisan test --compact tests/Browser/LoginTest.php tests/Feature/Auth/AuthenticationTest.php` — 17 passed. Browser: hero loaded, form pane white, inputs `rgb(255,255,255)` / dark text while `html.dark`.
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none. Ask for a full `./vendor/bin/sail artisan test --compact` suite run.
+
+## 2026-09-08 — G17 Lab order patient picker
+
+New lab order patient field is a visible typeahead. Lab staff can search patients for that picker without accessing the Patients module. Accountant search stays 403.
+
+- **Verified:** `./vendor/bin/sail artisan test --compact tests/Feature/PatientTest.php tests/Feature/LabOrderTest.php tests/Feature/PickerOptionsTest.php tests/Feature/HttpPageAccessTest.php` — 170 passed. After correct pass: Patient/LabOrder feature + Browser LabOrder/Treatment/Imaging — 63 passed (`sail npm run build`). R1–R3 fixed; R4–R6 Low deferred (B28–B30).
+- **Packages:** Laravel app only (no new Composer/npm deps)
+- **Next implement:** none (architecture G0–G17 complete). Ask for a full `./vendor/bin/sail artisan test --compact` suite run.
 
 ## 2026-09-08 — G16 Clinic ops polish
 

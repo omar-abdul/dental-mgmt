@@ -1,38 +1,33 @@
-# Review results — G16 Clinic ops polish
+# Review results — G17 Lab order patient picker
 
 - Date: 2026-09-08
 - Mode: verify
-- Scope: T1–T4 (LocalCombobox, patient cascade soft-delete, staff active/inactive, printable reports); prior R1–R4
-- Goal: G16 — Clinic ops polish (Mode A)
+- Scope: `PatientPicker.vue`, `lab/Create.vue`, `PatientPolicy.php`, `PatientController.php`, `LabOrderController.php`, `PatientTest.php`, `LabOrderTest.php`, `Browser/LabOrderTest.php`
+- Goal: G17 — Lab order patient picker (Mode A)
 
 ## Summary
 
 | ID | Severity | Status | Path | Title |
 |----|----------|--------|------|-------|
-| R1 | Critical | fixed | `bootstrap/app.php` | `appendToGroup('auth')` shadows `Authenticate` — guests skip login redirect |
-| R2 | Medium | fixed | `tests/Feature/ReportsTest.php` | G16 verify bullet missing: feature test for print button |
-| R3 | Low | deferred | `resources/js/pages/reports/Index.vue` | Reports hub print chrome incomplete vs child report pages |
-| R4 | Medium | fixed | `tests/Feature/PatientTest.php` | No feature test that deleted patient invoices vanish from billing index |
+| R1 | Medium | fixed | `resources/js/components/PatientPicker.vue` | Keystroke `''` emit fix is page-local; sibling create pages still Inertia-visit |
+| R2 | Medium | fixed | `tests/Browser/LabOrderTest.php` | No regression test for “no Inertia visit on keystroke” Done-when |
+| R3 | Medium | fixed | `resources/js/components/PatientPicker.vue` | Overlapping search XHRs can apply stale results |
+| R4 | Low | deferred | `architecture.md` | Auth matrix omits Lab `patients.search` capability |
+| R5 | Low | deferred | `app/Http/Controllers/LabOrderController.php` | Duplicated patient picker payload shaping |
+| R6 | Low | deferred | `resources/js/components/PatientPicker.vue` | Label loses `for` when a patient is selected |
 
 ## Assessment overview
 
-- Guidelines: G16 Done-when for T1–T4 holds on Feature evidence. Mandatory gate `./vendor/bin/sail artisan test --compact` on the listed G16 Feature files: **320 passed**. Architecture print-button feature test (R2) and billing-index omission (R4) are present. R3 Low hub `print:hidden` wrap remains.
-- Blast radius: R1 fix restores Laravel `auth` alias on clinic groups (`web`, `auth`, `active`). No `auth` middleware **group**. Fortify `password.confirm` / `logout` stay `auth:web` without `active`; clinic pages still log inactive users out (`AuthenticationTest`). Not a new clinic-data finding.
-- Security: Guest `DELETE patients.destroy` is **302 to login**, not 403. `EnsureUserIsActive` passes guests through; redirect is `Illuminate\Auth\Middleware\Authenticate`. Inactive login still rejected at Fortify `authenticateUsing`.
-- Readability: no new issues in this pass.
-- Extensibility: `['auth', 'active']` on `routes/web.php` and `routes/settings.php` is the durable pattern (do not resurrect `appendToGroup('auth')`).
-- Cohesiveness: D7 still honored (invoices/payments soft-deleted, not force-deleted). Hub print chrome (R3) still looser than Wave 1 child reports.
+- Guidelines: Core G17 Done-when items appear implemented — visible combobox, Lab `search` policy (not `viewAny`), phone on prefill, feature + browser happy path. Residual gaps: no automated guard for keystroke Inertia visits (R2).
+- Blast radius: Shared `PatientPicker` label fix benefits all consumers. Watch guard applied only on `lab/Create.vue`; treatments/imaging create pages retain reload-on-keystroke if empty emits continue (R1).
+- Security: `Gate::authorize('search', Patient::class)` + `SEARCH_ROLES` matches intent. Lab still 403 on patients index/show. Accountant still 403 on search.
+- Readability: Lab create watch guard is clear. Policy `SEARCH_ROLES` documents intent. Minor duplication between controllers (R5).
+- Extensibility: Empty v-model emits during typing should be fixed in `PatientPicker` (R1).
+- Cohesiveness: Architecture §6 matrix not updated for Lab search (R4).
 
 ## Critical
 
-### R1 — `appendToGroup('auth')` shadows `Authenticate` — guests skip login redirect
-- Severity: Critical
-- Status: fixed
-- Path: `bootstrap/app.php`
-- Area: security
-- Finding: `$middleware->appendToGroup('auth', [EnsureUserIsActive::class])` registered a middleware **group** named `auth`. Laravel resolves groups before aliases, so `Route::middleware('auth')` skipped `Authenticate`. Guests hit Gates and got **403** instead of login redirect.
-- Evidence (verify): `appendToGroup` gone. Alias `'active' => EnsureUserIsActive::class` only. `patients.destroy` middleware is `["web","auth","active"]`. No `auth` group. Guest destroy + FormAbuse `patients destroy` + HttpPageAccess guests all `assertRedirectToRoute('login')` (passed). `EnsureUserIsActive` redirects only when `$request->user()` is inactive — guests fall through to Authenticate.
-- Suggested fix: (applied) Use `Route::middleware(['auth', 'active'])`; do not `appendToGroup('auth')`.
+None.
 
 ## High
 
@@ -40,34 +35,61 @@ None.
 
 ## Medium
 
-### R2 — G16 verify bullet missing: feature test for print button
+### R1 — Keystroke `''` emit fix is page-local; sibling create pages still Inertia-visit
 - Severity: Medium
 - Status: fixed
-- Path: `tests/Feature/ReportsTest.php`
-- Area: guidelines
-- Finding: Architecture G16 verify requires a feature test that the report print button is present.
-- Evidence (verify): `wave 1 report pages include a print control` covers hub + 7 Wave 1 pages; GET 200 + Vue contains `<ReportPrintButton` and `data-test="print-report-button"`.
-- Suggested fix: (applied)
+- Path: `resources/js/components/PatientPicker.vue`, `resources/js/pages/treatments/Create.vue`, `resources/js/pages/imaging/Create.vue`
+- Area: extensibility
+- Finding: `PatientPicker.onInput` still emits `update:modelValue('')` on every keystroke while searching. Only `lab/Create.vue` guards the parent `watch` against empty-to-empty transitions. `treatments/Create.vue` and `imaging/Create.vue` still call `router.get(...)` on each emit, causing unnecessary Inertia partial reloads during typing — the same bug G17 root-caused on lab create.
+- Evidence: `PatientPicker.vue` emits `''` on every input change. `lab/Create.vue` skips visit when `patientId === '' && previousPatientId` is empty. `treatments/Create.vue` and `imaging/Create.vue` have unguarded watches.
+- Suggested fix: Stop emitting `update:modelValue('')` during typing in `PatientPicker` (only emit on select/clear).
 
-### R4 — No feature test that deleted patient invoices vanish from billing index
+### R2 — No regression test for “no Inertia visit on keystroke” Done-when
 - Severity: Medium
 - Status: fixed
-- Path: `tests/Feature/PatientTest.php`
+- Path: `tests/Browser/LabOrderTest.php`
 - Area: guidelines
-- Finding: T2 Done-when requires deleted patients disappear from billing indexes.
-- Evidence (verify): `deleted patient invoices are omitted from billing index` — after destroy, `GET billing.index` Inertia `invoices.data` omits the invoice; `Invoice::withTrashed()` still exists with `deleted_at`.
-- Suggested fix: (applied)
+- Finding: GOAL/T1 Done-when requires that Inertia does not visit `lab.create` on each keystroke. Existing browser test types into the picker and creates an order but does not assert visit count or absence of intermediate `lab.create` requests while typing.
+- Evidence: Browser create test fills search and selects; no query-string or typed-value assertions during typing.
+- Suggested fix: Type slowly into `@patient-picker-search` and assert `patient_id` is absent from the query string and the typed query remains visible until a patient is selected.
+
+### R3 — Overlapping search XHRs can apply stale results
+- Severity: Medium
+- Status: fixed
+- Path: `resources/js/components/PatientPicker.vue`
+- Area: readability
+- Finding: Debounced search fires `http.get` without aborting prior in-flight requests. If responses return out of order, the dropdown can show results for an older query.
+- Evidence: `scheduleSearch` / `runSearch` call `http.get` with no request id, abort signal, or “latest query wins” check in `onSuccess`.
+- Suggested fix: In `onSuccess`, ignore payloads whose query does not match the current `query` ref.
 
 ## Low
 
-### R3 — Reports hub print chrome incomplete vs child report pages
+### R4 — Auth matrix omits Lab `patients.search` capability
 - Severity: Low
 - Status: deferred
-- Path: `resources/js/pages/reports/Index.vue`
+- Path: `architecture.md`
+- Area: guidelines
+- Finding: G17 adds `PatientPolicy::search` for Lab. Architecture §6 capability table still shows Lab with no patient access.
+- Evidence: `architecture.md` Patients view — for Lab. G17 verify bullets describe picker search.
+- Suggested fix: Add a “Patient picker search (`patients.search`)” row with Lab ✓; Patients module remains — for Lab.
+
+### R5 — Duplicated patient picker payload shaping
+- Severity: Low
+- Status: deferred
+- Path: `app/Http/Controllers/LabOrderController.php`, `app/Http/Controllers/PatientController.php`
 - Area: cohesiveness
-- Finding: Child report pages wrap Print (and back-link) in `print:hidden`. Hub mounts `<ReportPrintButton />` without that wrapper, so the hub Print control can still appear on paper. Sidebar/header/date-filter already use `print:hidden`.
-- Evidence: `resources/js/pages/reports/Index.vue` vs `DailyAppointments.vue` (`<div class="flex items-center gap-3 print:hidden">`).
-- Suggested fix: Wrap hub header actions in `print:hidden`. Deferred this run (Low).
+- Finding: Identical picker payload mapping exists in two private methods.
+- Evidence: `PatientController::patientSearchResult` and `LabOrderController::patientPickerPayload`.
+- Suggested fix: Extract a shared helper on `Patient` or a DTO used by both controllers.
+
+### R6 — Label loses `for` when a patient is selected
+- Severity: Low
+- Status: deferred
+- Path: `resources/js/components/PatientPicker.vue`
+- Area: readability
+- Finding: When `hasSelection` is true, the label has no `for`, so clicking “Patient” does not focus a control.
+- Evidence: `:for="hasSelection ? undefined : searchInputId"`.
+- Suggested fix: Associate the label with the selected chip or Clear button.
 
 ## Verify pass notes
 
@@ -75,7 +97,10 @@ None.
 
 | Finding id | Prior status | Verify result | Notes |
 |------------|--------------|---------------|-------|
-| R1 | fixed (Corrector) | fixed | Guest destroy is Authenticate **302 → login**, not Gate 403. Route stack `web, auth, active`. Feature gate 320 passed. |
-| R2 | fixed (Corrector) | fixed | Hub + 7 Wave 1 pages asserted in `ReportsTest`. |
-| R3 | open | deferred | Low hub `print:hidden`. Residue → workflow Backlog B27 (Expires 2026-10-08). |
-| R4 | fixed (Corrector) | fixed | Billing index omits soft-deleted invoice; row still in DB with `deleted_at`. |
+| R1 | fixed | fixed | No empty emit on keystroke; treatments/imaging empty-to-empty guard |
+| R2 | fixed | fixed | `typeSlowly` + `assertQueryStringMissing('patient_id')` |
+| R3 | fixed | fixed | `onSuccess` ignores query mismatch |
+| R4 | open | deferred | Backlog B28 |
+| R5 | open | deferred | Backlog B29 |
+| R6 | open | deferred | Backlog B30 |
+

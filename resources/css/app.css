@@ -126,6 +126,33 @@
     --sidebar: hsl(222 47% 11%);
 }
 
+/*
+  Auth split form pane is always a white surface. Reset tokens so .dark on
+  <html> cannot turn inputs into a mixed transparent/dark fill.
+*/
+.auth-split-form {
+    color-scheme: light;
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(0 0% 3.9%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(0 0% 3.9%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(0 0% 3.9%);
+    --primary: hsl(173 58% 39%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(0 0% 92.1%);
+    --secondary-foreground: hsl(0 0% 9%);
+    --muted: hsl(0 0% 96.1%);
+    --muted-foreground: hsl(0 0% 45.1%);
+    --accent: hsl(0 0% 96.1%);
+    --accent-foreground: hsl(0 0% 9%);
+    --destructive: hsl(0 84.2% 60.2%);
+    --destructive-foreground: hsl(0 0% 98%);
+    --border: hsl(0 0% 84%);
+    --input: hsl(0 0% 78%);
+    --ring: hsl(173 58% 39%);
+}
+
 .dark {
     --background: hsl(0 0% 3.9%);
     --foreground: hsl(0 0% 98%);
@@ -168,5 +195,78 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@media print {
+    @page {
+        margin: 12mm;
+    }
+
+    html,
+    html.dark,
+    body {
+        background: #fff !important;
+        color: #111 !important;
+    }
+
+    html,
+    html.dark,
+    :root,
+    .dark {
+        --background: hsl(0 0% 100%);
+        --foreground: hsl(0 0% 3.9%);
+        --card: hsl(0 0% 100%);
+        --card-foreground: hsl(0 0% 3.9%);
+        --muted: hsl(0 0% 96.1%);
+        --muted-foreground: hsl(0 0% 32%);
+        --border: hsl(0 0% 82%);
+        --primary: hsl(173 58% 39%);
+        --primary-foreground: hsl(0 0% 100%);
+        --sidebar-background: hsl(0 0% 100%);
+        --sidebar: hsl(0 0% 100%);
+    }
+
+    body {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    [data-slot='sidebar'] {
+        display: none !important;
+    }
+
+    [data-slot='sidebar-wrapper'] {
+        display: block !important;
+        min-height: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        background: #fff !important;
+    }
+
+    [data-slot='sidebar-inset'] {
+        display: block !important;
+        overflow: visible !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        color: #111 !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    [data-slot='sidebar-inset'] > header {
+        display: none !important;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr {
+        break-inside: avoid;
     }
 }

@@ -51,7 +51,15 @@ const selectedDentist = ref(props.defaultDentistId?.toString() ?? '');
 const procedureCount = ref(1);
 const prescriptionItemCount = ref(1);
 
-watch(selectedPatient, (patientId) => {
+watch(selectedPatient, (patientId, previousPatientId) => {
+    if (patientId === previousPatientId) {
+        return;
+    }
+
+    if (patientId === '' && (previousPatientId === '' || previousPatientId === undefined)) {
+        return;
+    }
+
     router.get(
         treatmentsCreate.url({ query: patientId ? { patient_id: patientId } : {} }),
         {},

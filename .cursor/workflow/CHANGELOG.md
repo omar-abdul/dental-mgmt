@@ -2,19 +2,19 @@
 
 Per-run fix log for goal-workflow Corrector appends. Architecture goal completions go in root `changelog.md`.
 
-## 2026-09-08 — G16 — correct pass
+## 2026-09-08 — G17 — correct pass
 
 ### Fixed
 
-- **R1** — Removed `appendToGroup('auth')` so the `auth` alias (`Authenticate`) is applied again; inactive staff use the `active` alias on authenticated route groups (`bootstrap/app.php`, `routes/web.php`, `routes/settings.php`)
-- **R2** — Feature test that each Wave 1 report page mounts and includes `<ReportPrintButton>` with `data-test="print-report-button"` (`tests/Feature/ReportsTest.php`)
-- **R4** — Feature test that a deleted patient’s invoice is omitted from billing index (`tests/Feature/PatientTest.php`)
+- **R1** — `PatientPicker` no longer emits empty `patient_id` on each keystroke; treatments/imaging create watches ignore empty-to-empty (same as lab) (`PatientPicker.vue`, `treatments/Create.vue`, `imaging/Create.vue`)
+- **R2** — Browser lab create types slowly and asserts `patient_id` is absent from the query string until a patient is selected (`tests/Browser/LabOrderTest.php`)
+- **R3** — Search `onSuccess` ignores responses that no longer match the current query (`PatientPicker.vue`)
 
 ### Deferred / wontfix
 
-- **R3** — Low; hub `print:hidden` chrome. Not requested this run.
+- **R4**, **R5**, **R6** — Low; not requested this run (Verifier → Backlog)
 
 ### Notes
 
-- Tasks touched: T2 (guest redirect), T3 (active middleware wiring), T4 (print feature coverage)
-- Tests / checks run: `./vendor/bin/sail artisan test --compact tests/Feature/PatientTest.php tests/Feature/ReportsTest.php tests/Feature/HttpPageAccessTest.php tests/Feature/StaffTest.php tests/Feature/Auth/AuthenticationTest.php` — 221 passed. `vendor/bin/pint --dirty --format agent` passed.
+- Tasks touched: T1
+- Tests / checks run: `./vendor/bin/sail artisan test --compact tests/Feature/PatientTest.php tests/Feature/LabOrderTest.php tests/Browser/LabOrderTest.php tests/Browser/TreatmentTest.php tests/Browser/ImagingOrderTest.php` — 63 passed after `sail npm run build`

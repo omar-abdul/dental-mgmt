@@ -26,7 +26,15 @@ const props = defineProps<{
 
 const selectedPatient = ref(props.selectedPatientId?.toString() ?? '');
 
-watch(selectedPatient, (patientId) => {
+watch(selectedPatient, (patientId, previousPatientId) => {
+    if (patientId === previousPatientId) {
+        return;
+    }
+
+    if (patientId === '' && (previousPatientId === '' || previousPatientId === undefined)) {
+        return;
+    }
+
     router.get(
         labCreate.url({ query: patientId ? { patient_id: patientId } : {} }),
         {},
@@ -60,7 +68,6 @@ defineOptions({
             class="max-w-2xl space-y-6"
         >
             <div class="space-y-2">
-                <Label for="patient_id">Patient</Label>
                 <PatientPicker
                     id="patient_id"
                     v-model="selectedPatient"

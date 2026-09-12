@@ -409,3 +409,21 @@ test('wave 1 report pages include a print control', function (string $route, str
     'low stock' => ['reports.low-stock', 'reports/LowStock', 'LowStock.vue'],
     'treatment statistics' => ['reports.treatment-statistics', 'reports/TreatmentStatistics', 'TreatmentStatistics.vue'],
 ]);
+
+test('print stylesheet hides the sidebar slot and lets inset content overflow', function () {
+    $css = file_get_contents(resource_path('css/app.css'));
+
+    expect($css)->toContain('@media print')
+        ->and($css)->toContain("[data-slot='sidebar']")
+        ->and($css)->toContain("[data-slot='sidebar-inset']")
+        ->and($css)->toContain('overflow: visible');
+});
+
+test('report print controls are marked hidden for print media', function () {
+    expect(file_get_contents(resource_path('js/components/reports/ReportPrintButton.vue')))
+        ->toContain('print:hidden');
+    expect(file_get_contents(resource_path('js/pages/reports/Index.vue')))
+        ->toContain('print:hidden');
+    expect(file_get_contents(resource_path('js/components/AppSidebarHeader.vue')))
+        ->toContain('print:hidden');
+});

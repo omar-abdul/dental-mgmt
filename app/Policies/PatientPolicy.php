@@ -27,9 +27,25 @@ class PatientPolicy
         ClinicRole::Receptionist,
     ];
 
+    /**
+     * Picker typeahead. Lab may search identity to create orders without
+     * the Patients module (viewAny).
+     *
+     * @var list<ClinicRole>
+     */
+    private const SEARCH_ROLES = [
+        ...self::VIEW_ROLES,
+        ClinicRole::Lab,
+    ];
+
     public function viewAny(User $user): bool
     {
         return $user->hasRole(...self::VIEW_ROLES);
+    }
+
+    public function search(User $user): bool
+    {
+        return $user->hasRole(...self::SEARCH_ROLES);
     }
 
     public function view(User $user, Patient $patient): bool
